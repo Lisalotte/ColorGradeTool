@@ -1,5 +1,9 @@
+mod colorgrade;
+
 #[derive(Default)]
-pub struct ColorGradeApp {}
+pub struct ColorGradeApp {
+    value: f32,
+}
 
 impl ColorGradeApp {
     /// Called once before the first frame.
@@ -9,9 +13,15 @@ impl ColorGradeApp {
 }
 
 impl eframe::App for ColorGradeApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    // Called each time the UI needs repainting
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {        
+        
+        // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Hello World!");
+
+            ui.add(egui::Slider::new(&mut self.value, 0.0..=2.0).text("value"));
         });
     }
 }
