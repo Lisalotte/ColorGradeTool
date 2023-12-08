@@ -1,3 +1,6 @@
-struct SliderBox {
-    
+pub struct SliderBox {
+}
+
+impl SliderBox {
+
 }
