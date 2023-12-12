@@ -1,7 +1,5 @@
 use eframe::egui;
-
 mod app;
-
 fn main() {
     println!("Hello, world!");
 

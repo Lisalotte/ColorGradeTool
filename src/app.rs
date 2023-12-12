@@ -1,4 +1,5 @@
 mod colorgrade;
+mod remotecontrol;
 
 #[derive(Default)]
 pub struct ColorGradeApp {
@@ -90,11 +91,10 @@ impl eframe::App for ColorGradeApp {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hello World!");
-
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=2.0).text("value"));
-
-            color_grade.create_sliders(ui);
+            if ui.button("Get Fullscreen").clicked() {
+                remotecontrol::send_request();
+            }
+            color_grade.create_sliderbox(ui);
         });
     }
 }
