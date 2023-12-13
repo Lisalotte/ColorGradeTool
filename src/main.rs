@@ -1,4 +1,3 @@
-use eframe::egui;
 pub mod app;
 pub mod colorgrade;
 

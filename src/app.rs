@@ -4,15 +4,12 @@ use remotecontrol::GetRequest;
 use crate::colorgrade;
 
 pub struct ColorGradeApp {
-    request: remotecontrol::GetRequest,
     color_grade: colorgrade::ColorGrade,
 }
 
 impl ColorGradeApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let request = GetRequest::init(); 
-
         let sat = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0
         };
@@ -83,8 +80,7 @@ impl ColorGradeApp {
         );
     
         // Instantiate the color_grade struct
-        Self {  
-            request: request,  
+        Self {
             color_grade: color_grade_obj
         }
         
@@ -104,6 +100,9 @@ impl eframe::App for ColorGradeApp {
             let request = GetRequest::init(); 
             if ui.button("Get values from UE").clicked() {
                 remotecontrol::send_request(request.get_fullscreen);
+            }
+            if ui.button("Update to UE").clicked() {
+                remotecontrol::update_everything(self.color_grade.clone());
             }
             self.color_grade.create_sliderbox(ui);
         });

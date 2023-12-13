@@ -1,10 +1,13 @@
 mod sliderbox;
+use serde_json::json;
+use serde_json::Value;
 
+#[derive(Clone, Copy)]
 pub struct ColorValues {
     pub r: f64,
     pub g: f64,
     pub b: f64,
-    pub a: f64,
+    pub a: f64
 }
 
 impl ColorValues {
@@ -16,8 +19,20 @@ impl ColorValues {
             ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0).text("A"));
         });
     }
+
+    pub fn to_json(self) -> Value {
+        let result = json!({
+            "X": self.r,
+            "Y": self.g,
+            "Z": self.b,
+            "W": self.a
+        });
+
+        return result;
+    }
 }
 
+#[derive(Clone)]
 pub struct ColorComponent {
     pub name: String,
     pub saturation: ColorValues,
@@ -38,6 +53,7 @@ impl ColorComponent {
     }
 }
 
+#[derive(Clone)]
 pub struct ColorGrade {
     pub components: [ColorComponent; 3]
 }
@@ -47,10 +63,6 @@ impl ColorGrade {
         Self {
             components: components_in
         }
-    }
-
-    fn update_everything() {
-
     }
 
     pub fn create_sliderbox(&mut self, ui: &mut egui::Ui) {
