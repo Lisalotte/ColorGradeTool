@@ -3,6 +3,8 @@ mod remotecontrol;
 use remotecontrol::GetRequest;
 use crate::colorgrade;
 
+use self::remotecontrol::update_everything;
+
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
 }
@@ -91,10 +93,34 @@ impl ColorGradeApp {
     }
 }
 
+fn update_sliders() {
+
+}
+
 impl eframe::App for ColorGradeApp {
     // Called each time the UI needs repainting
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {       
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
+
+        // for every slider box
+        for (i, component) in self.color_grade.components.iter().enumerate() {
+            let prefix = match i {
+                0 => "fullscreen",
+                1 => "scene",
+                2 => "camera",
+                _ => unreachable!(),
+            };
+
+            for response in component.saturation.sliderbox
+                if response.drag_released() {
+                    update_everything(color_grade);
+                }
+                
+            }
+        }
+
+
+        // check if value has changed
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let request = GetRequest::init(); 

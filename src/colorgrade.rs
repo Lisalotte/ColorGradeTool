@@ -12,11 +12,13 @@ pub struct ColorValues {
 
 impl ColorValues {
     pub fn create_sliders(&mut self, ui: &mut egui::Ui) {
+
         ui.vertical(|ui| {
-            ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0).text("R"));
-            ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0).text("G"));
-            ui.add(egui::Slider::new(&mut self.b, 0.0..=2.0).text("B"));
-            ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0).text("A"));
+            self.add_sliderbox(ui);
+            // ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0).text("R"));
+            // ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0).text("G"));
+            // ui.add(egui::Slider::new(&mut self.b, 0.0..=2.0).text("B"));
+            // ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0).text("A"));
         });
     }
 
@@ -29,6 +31,14 @@ impl ColorValues {
         });
 
         return result;
+    }
+
+    fn add_sliderbox(&mut self, ui: &mut egui::Ui) {
+        self.sliderbox = Option::Some(sliderbox::SliderBox::new(self.r, self.g, self.b, self.a, ui));
+    }
+
+    pub fn iter_responses(&mut self) -> [egui::Response; 4] {
+        [self.sliderbox.r, self.sliderbox.g, self.sliderbox.b, self.sliderbox.a]
     }
 }
 pub struct ColorComponent {

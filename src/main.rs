@@ -10,5 +10,5 @@ fn main() {
         "ColorGrade Tool",
         native_options,
         Box::new(|cc| Box::new(app::ColorGradeApp::new(cc)))
-    );
+    ).unwrap();
 }
