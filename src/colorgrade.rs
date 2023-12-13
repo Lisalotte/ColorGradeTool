@@ -1,3 +1,8 @@
+use std::{clone, path::Component};
+
+mod sliderbox;
+
+#[derive(Clone)]
 pub struct ColorValues {
     pub r: f64,
     pub g: f64,
@@ -5,6 +10,7 @@ pub struct ColorValues {
     pub a: f64,
 }
 
+#[derive(Clone)]
 pub struct ColorComponent<'b> {
     pub name: &'b str,
     pub saturation: ColorValues,
@@ -13,18 +19,15 @@ pub struct ColorComponent<'b> {
     pub gain: ColorValues,
 }
 
+#[derive(Clone)]
 pub struct ColorGrade<'a> {
-    pub components: [&'a mut ColorComponent<'a>; 3],
-    pub function_name: String,    
-    pub level_path: String,
+    pub components: [&'a ColorComponent<'a>; 3]
 }
 
 impl<'a> ColorGrade<'a> {
-    pub fn new(components_in: [&'a mut ColorComponent<'a>; 3], function_name_in: &str, level_path_in: &str) -> Self {
+    pub fn new(components_in: [&'a ColorComponent<'a>; 3]) -> Self {
         Self {
-            components: components_in,
-            function_name: String::from(function_name_in),
-            level_path: String::from(level_path_in)
+            components: components_in
         }
     }
 

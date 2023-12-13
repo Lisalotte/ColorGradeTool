@@ -1,5 +1,7 @@
 use eframe::egui;
-mod app;
+pub mod app;
+pub mod colorgrade;
+
 fn main() {
     println!("Hello, world!");
 
