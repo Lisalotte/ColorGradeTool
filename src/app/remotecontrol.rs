@@ -51,7 +51,7 @@ pub fn send_request(request: Value) -> Result<(), reqwest::Error> {
     Ok(())
 }
 
-pub fn update_everything(color_grade: colorgrade::ColorGrade) -> Result<(), reqwest::Error>{
+pub fn update_everything(color_grade: &mut colorgrade::ColorGrade) -> Result<(), reqwest::Error>{
     let url_call = "http://127.0.0.1:30010/";
 
     let url = url_call.to_owned() + "remote/object/call";

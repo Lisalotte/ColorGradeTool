@@ -11,16 +11,16 @@ impl ColorGradeApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
 
         let fullscreen = colorgrade::ColorComponent::new(
@@ -32,16 +32,16 @@ impl ColorGradeApp {
         );
 
         let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
 
         let scene = colorgrade::ColorComponent::new(
@@ -53,16 +53,16 @@ impl ColorGradeApp {
         );
 
         let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
         let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, sliderbox: Option::None
         };
 
         let camera = colorgrade::ColorComponent::new(
@@ -99,10 +99,10 @@ impl eframe::App for ColorGradeApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             let request = GetRequest::init(); 
             if ui.button("Get values from UE").clicked() {
-                remotecontrol::send_request(request.get_fullscreen);
+                remotecontrol::send_request(request.get_fullscreen).unwrap();
             }
             if ui.button("Update to UE").clicked() {
-                remotecontrol::update_everything(self.color_grade.clone());
+                remotecontrol::update_everything(&mut self.color_grade).unwrap();
             }
             self.color_grade.create_sliderbox(ui);
         });

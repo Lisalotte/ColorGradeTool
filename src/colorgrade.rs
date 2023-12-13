@@ -2,12 +2,12 @@ mod sliderbox;
 use serde_json::json;
 use serde_json::Value;
 
-#[derive(Clone, Copy)]
 pub struct ColorValues {
     pub r: f64,
     pub g: f64,
     pub b: f64,
-    pub a: f64
+    pub a: f64,
+    pub sliderbox: Option<sliderbox::SliderBox>
 }
 
 impl ColorValues {
@@ -20,7 +20,7 @@ impl ColorValues {
         });
     }
 
-    pub fn to_json(self) -> Value {
+    pub fn to_json(&self) -> Value {
         let result = json!({
             "X": self.r,
             "Y": self.g,
@@ -31,8 +31,6 @@ impl ColorValues {
         return result;
     }
 }
-
-#[derive(Clone)]
 pub struct ColorComponent {
     pub name: String,
     pub saturation: ColorValues,
@@ -53,7 +51,6 @@ impl ColorComponent {
     }
 }
 
-#[derive(Clone)]
 pub struct ColorGrade {
     pub components: [ColorComponent; 3]
 }
