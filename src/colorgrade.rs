@@ -1,4 +1,3 @@
-mod sliderbox;
 use serde_json::json;
 use serde_json::Value;
 
@@ -7,7 +6,6 @@ pub struct ColorValues {
     pub g: f64,
     pub b: f64,
     pub a: f64,
-    pub sliderbox: Option<sliderbox::SliderBox>,
     pub r_old: Option<f64>,
     pub g_old: Option<f64>,
     pub b_old: Option<f64>,
@@ -36,15 +34,8 @@ impl ColorValues {
 
         return result;
     }
-
-    fn add_sliderbox(&mut self, ui: &mut egui::Ui) {
-        self.sliderbox = Option::Some(sliderbox::SliderBox::new(self.r, self.g, self.b, self.a, ui));
-    }
-
-    // pub fn iter_responses(&mut self) -> [egui::Response; 4] {
-    //     [self.sliderbox.r, self.sliderbox.g, self.sliderbox.b, self.sliderbox.a]
-    // }
 }
+
 pub struct ColorComponent {
     pub name: String,
     pub saturation: ColorValues,
