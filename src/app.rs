@@ -13,6 +13,8 @@ pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
     show_presetname_viewport: bool,
     preset_name: String,
+    object_path: Option<String>,
+    ip_address: Option<String>,
 }
 
 impl ColorGradeApp {
@@ -91,9 +93,10 @@ impl ColorGradeApp {
         Self {
             color_grade: color_grade_obj,
             show_presetname_viewport: false,
-            preset_name: String::from("preset")
+            preset_name: String::from("preset"),
+            object_path: Option::None,
+            ip_address: Option::None
         }
-        
     }
 
     pub fn setup() {
@@ -208,6 +211,7 @@ impl eframe::App for ColorGradeApp {
                         ui.text_edit_singleline(&mut self.preset_name);
                         if ui.button("Save").clicked() {
                             presetmanager::save_preset(&self.color_grade, &self.preset_name);
+                            self.show_presetname_viewport = false;
                         }
                     });
 
