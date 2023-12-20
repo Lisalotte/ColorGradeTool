@@ -169,6 +169,9 @@ impl eframe::App for ColorGradeApp {
             if ui.button("Save Preset").clicked() {
                 presetmanager::save_preset(&self.color_grade);
             }
+            if ui.button("Load Preset").clicked() {
+                presetmanager::load_preset(&mut self.color_grade);
+            }
             self.color_grade.create_sliderbox(ui);
         });
     }
