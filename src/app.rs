@@ -1,5 +1,6 @@
 mod remotecontrol;
 mod presetmanager;
+mod configmanager;
 
 use std::future::pending;
 
@@ -12,9 +13,11 @@ use self::remotecontrol::update_everything;
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
     show_presetname_viewport: bool,
+    show_path_viewport: bool,
     preset_name: String,
-    object_path: Option<String>,
-    ip_address: Option<String>,
+    config_name: String,
+    object_path: String,
+    ip_address: String,
 }
 
 impl ColorGradeApp {
@@ -88,19 +91,22 @@ impl ColorGradeApp {
         let mut color_grade_obj = colorgrade::ColorGrade::new(
             components
         );
+
+        let mut object_path_init = String::from("");
+        let mut ip_address_init = String::from("");
+        
+        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init);
     
         // Instantiate the color_grade struct
         Self {
             color_grade: color_grade_obj,
             show_presetname_viewport: false,
+            show_path_viewport: false,
+            config_name: String::from("default"),
             preset_name: String::from("preset"),
-            object_path: Option::None,
-            ip_address: Option::None
+            object_path: object_path_init,
+            ip_address: ip_address_init,
         }
-    }
-
-    pub fn setup() {
-
     }
 }
 
@@ -162,7 +168,7 @@ impl eframe::App for ColorGradeApp {
         
         // Send all values to UE, if a slider values has changed
         if (pending_update) {
-            remotecontrol::update_everything(&mut self.color_grade).unwrap();
+            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone()).unwrap();
         }
 
         //--- Main app ---
@@ -186,6 +192,7 @@ impl eframe::App for ColorGradeApp {
                     }
                 }
                 if ui.button("Set Object Path").clicked() {
+                    self.show_path_viewport = true;
                 }            
                 if ui.button("Set Target IP").clicked() {
                 }
@@ -193,7 +200,7 @@ impl eframe::App for ColorGradeApp {
             self.color_grade.create_sliderbox(ui);
         });
 
-        // Save preset - filename dialog
+        // New window for saving a preset
         if self.show_presetname_viewport {
             ctx.show_viewport_immediate(
                 egui::ViewportId::from_hash_of("presetname_viewport"),
@@ -218,6 +225,35 @@ impl eframe::App for ColorGradeApp {
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
                         self.show_presetname_viewport = false;
+                    }
+                },
+            );
+        }
+
+        // New window for setting the object path
+        if self.show_path_viewport {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("objectpath_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Object Path")
+                    .with_inner_size([600.0, 200.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Object Path:");
+                        ui.text_edit_singleline(&mut self.object_path);
+                        if ui.button("Save").clicked() {
+                            self.show_path_viewport = false;
+                        }
+                    });
+
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_path_viewport = false;
                     }
                 },
             );
