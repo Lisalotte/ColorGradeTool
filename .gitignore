@@ -1,5 +1,5 @@
 /target
-/presets
+/src/presets
 /.vscode
 /.idea
-/.json
+*.json
