@@ -13,9 +13,10 @@ pub struct ColorValues {
 }
 
 impl ColorValues {
-    pub fn create_sliders(&mut self, ui: &mut egui::Ui) {
+    pub fn create_sliders(&mut self, ui: &mut egui::Ui, name: &str) {
 
-        ui.vertical(|ui| {
+        ui.vertical(|ui| {            
+            ui.label(name);
             //self.add_sliderbox(ui);
             ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0).text("R"));
             ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0).text("G"));
@@ -71,10 +72,10 @@ impl ColorGrade {
         for comp in self.components.iter_mut() {
             ui.label(&comp.name);
             ui.horizontal(|ui| {
-                comp.saturation.create_sliders(ui);
-                comp.contrast.create_sliders(ui);
-                comp.gamma.create_sliders(ui);
-                comp.gain.create_sliders(ui);
+                comp.saturation.create_sliders(ui, "Saturation");
+                comp.contrast.create_sliders(ui, "Contrast");
+                comp.gamma.create_sliders(ui, "Gamma");
+                comp.gain.create_sliders(ui, "Gain");
             });
         }
     }

@@ -30,7 +30,7 @@ fn from_json(color_values: &mut colorgrade::ColorValues, json_object: &Value) {
 
 }
 
-pub fn save_preset(color_grade: &colorgrade::ColorGrade) {
+pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
     // Create a json object
     
     let mut json_object = json!({
@@ -46,6 +46,8 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade) {
         let con_json = to_json(&component.contrast);
         let gam_json = to_json(&component.gamma);
         let gai_json = to_json(&component.gain);
+
+        println!("values: {}", sat_json);
 
         let component_json = json!({
             "saturation" : sat_json,
@@ -70,12 +72,14 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade) {
     let json_string = serde_json::to_string_pretty(&json_object).expect("Failed to serialize to JSON");
 
     // Write the JSON string to a file
-    std::fs::write("test_preset.json", json_string).expect("Failed to write to file");
+    std::fs::write(format!("{name}.json"), json_string).expect("Failed to write to file");
 }
 
-pub fn load_preset(color_grade: &mut colorgrade::ColorGrade) {
+pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
 
-    let json_string = std::fs::read_to_string("test_preset.json").expect("Failed to read file");
+    println!("Path: {}", path);
+
+    let json_string = std::fs::read_to_string(path).expect("Failed to read file");
 
     let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
 

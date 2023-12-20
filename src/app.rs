@@ -5,11 +5,14 @@ use std::future::pending;
 
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self, ColorComponent};
+use rfd;
 
 use self::remotecontrol::update_everything;
 
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
+    show_presetname_viewport: bool,
+    preset_name: String,
 }
 
 impl ColorGradeApp {
@@ -86,7 +89,9 @@ impl ColorGradeApp {
     
         // Instantiate the color_grade struct
         Self {
-            color_grade: color_grade_obj
+            color_grade: color_grade_obj,
+            show_presetname_viewport: false,
+            preset_name: String::from("preset")
         }
         
     }
@@ -157,22 +162,61 @@ impl eframe::App for ColorGradeApp {
             remotecontrol::update_everything(&mut self.color_grade).unwrap();
         }
 
-        // Main app layout
+        //--- Main app ---
         egui::CentralPanel::default().show(ctx, |ui| {
             let request = GetRequest::init(); 
-            if ui.button("Get values from UE").clicked() {
-                remotecontrol::send_request(request.get_fullscreen).unwrap();
-            }
-            if ui.button("Update to UE").clicked() {
-                remotecontrol::update_everything(&mut self.color_grade).unwrap();
-            }
-            if ui.button("Save Preset").clicked() {
-                presetmanager::save_preset(&self.color_grade);
-            }
-            if ui.button("Load Preset").clicked() {
-                presetmanager::load_preset(&mut self.color_grade);
-            }
+            
+            ui.horizontal(|ui| {
+                // Menu buttons
+                if ui.button("Save Preset").clicked() {
+                    self.show_presetname_viewport = true;
+                }
+                if ui.button("Load Preset").clicked() { 
+                    // Open file dialog
+                    if let Ok(current_dir) = std::env::current_dir() {
+                        if let Some(path) = rfd::FileDialog::new()
+                        .set_directory(current_dir)
+                        .pick_file() {
+                            println!("Path: {}", path.display().to_string());
+                            presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                        }
+                    }
+                }
+                if ui.button("Set Object Path").clicked() {
+                }            
+                if ui.button("Set Target IP").clicked() {
+                }
+            });
             self.color_grade.create_sliderbox(ui);
         });
+
+        // Save preset - filename dialog
+        if self.show_presetname_viewport {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("presetname_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Preset Name")
+                    .with_inner_size([300.0, 200.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Save preset as:");
+                        ui.text_edit_singleline(&mut self.preset_name);
+                        if ui.button("Save").clicked() {
+                            presetmanager::save_preset(&self.color_grade, &self.preset_name);
+                        }
+                    });
+
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_presetname_viewport = false;
+                    }
+                },
+            );
+        }
     }
 }
