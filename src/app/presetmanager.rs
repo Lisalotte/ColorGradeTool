@@ -1,6 +1,8 @@
 use serde_json::json;
 use serde_json::Value;
 
+use std::path::Path;
+
 use crate::colorgrade;
 
 fn to_json(color_values: &colorgrade::ColorValues) -> Value {
@@ -71,14 +73,25 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
     // Serialize the JSON object to a JSON string
     let json_string = serde_json::to_string_pretty(&json_object).expect("Failed to serialize to JSON");
 
-    // Write the JSON string to a file
-    std::fs::write(format!("{name}.json"), json_string).expect("Failed to write to file");
+    if let Ok(current_dir) = std::env::current_dir() {
+        let presets_folder = "presets";
+
+        // Construct the path to the folder in the current working directory
+        let presets_folder_path = current_dir.join(presets_folder);
+
+        let folder_path_string = presets_folder_path.to_string_lossy().to_string();
+
+        if (!presets_folder_path.is_dir()) {
+            // Create the folder if it doesn't exist
+            std::fs::create_dir_all(presets_folder_path).unwrap();
+        }
+        // Write the JSON string to a file
+        std::fs::write(format!("{folder_path_string}/{name}.json"), json_string).expect("Failed to write to file");
+    }
 }
 
 pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
-
-    println!("Path: {}", path);
-
+    
     let json_string = std::fs::read_to_string(path).expect("Failed to read file");
 
     let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 

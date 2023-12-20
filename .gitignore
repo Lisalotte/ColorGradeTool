@@ -1,5 +1,6 @@
 /target
 /src/presets
+/presets
 /.vscode
 /.idea
 *.json
