@@ -1,4 +1,5 @@
 mod remotecontrol;
+mod presetmanager;
 
 use std::future::pending;
 
@@ -151,10 +152,12 @@ impl eframe::App for ColorGradeApp {
             }
         }
         
+        // Send all values to UE, if a slider values has changed
         if (pending_update) {
             remotecontrol::update_everything(&mut self.color_grade).unwrap();
         }
 
+        // Main app layout
         egui::CentralPanel::default().show(ctx, |ui| {
             let request = GetRequest::init(); 
             if ui.button("Get values from UE").clicked() {
@@ -162,6 +165,9 @@ impl eframe::App for ColorGradeApp {
             }
             if ui.button("Update to UE").clicked() {
                 remotecontrol::update_everything(&mut self.color_grade).unwrap();
+            }
+            if ui.button("Save Preset").clicked() {
+                presetmanager::save_preset(&self.color_grade);
             }
             self.color_grade.create_sliderbox(ui);
         });
