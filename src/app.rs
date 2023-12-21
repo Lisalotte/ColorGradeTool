@@ -2,26 +2,27 @@ mod remotecontrol;
 mod presetmanager;
 mod configmanager;
 
-use std::future::pending;
-
 use remotecontrol::GetRequest;
-use crate::colorgrade::{self, ColorComponent};
+use crate::colorgrade::{self};
 use rfd;
+
+use self::remotecontrol::update_everything;
 
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
     show_presetname_viewport: bool,
     show_path_viewport: bool,
     show_ip_viewport: bool,
+    show_config_viewport: bool,
     preset_name: String,
-    config_name: String,
+    project_name: String,
     object_path: String,
     ip_address: String,
 }
 
 impl ColorGradeApp {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let sat = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
         };
@@ -87,14 +88,16 @@ impl ColorGradeApp {
 
         let components: [colorgrade::ColorComponent; 3] = [fullscreen, scene, camera];
 
-        let mut color_grade_obj = colorgrade::ColorGrade::new(
+        let color_grade_obj = colorgrade::ColorGrade::new(
             components
         );
 
         let mut object_path_init = String::from("");
         let mut ip_address_init = String::from("");
+        let mut project_name_init = String::from("");
         
-        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init);
+        // Read default config file
+        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init, &mut project_name_init);
     
         // Instantiate the color_grade struct
         Self {
@@ -102,7 +105,8 @@ impl ColorGradeApp {
             show_presetname_viewport: false,
             show_path_viewport: false,
             show_ip_viewport: false,
-            config_name: String::from("default"),
+            show_config_viewport: false,
+            project_name: project_name_init,
             preset_name: String::from("preset"),
             object_path: object_path_init,
             ip_address: ip_address_init,
@@ -112,7 +116,7 @@ impl ColorGradeApp {
 
 impl eframe::App for ColorGradeApp {
     // Called each time the UI needs repainting
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {       
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {       
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
 
         let mut pending_update = false;
@@ -125,7 +129,7 @@ impl eframe::App for ColorGradeApp {
 
             for color_value in iter_array {
                 if let Some(r_old) = color_value.r_old {
-                    if (color_value.r != r_old) {
+                    if color_value.r != r_old {
                         // Update everything
                         color_value.r_old = Some(color_value.r);
                         pending_update = true;
@@ -135,7 +139,7 @@ impl eframe::App for ColorGradeApp {
                 }
 
                 if let Some(g_old) = color_value.g_old {
-                    if (color_value.g != g_old) {
+                    if color_value.g != g_old {
                         // Update everything
                         color_value.g_old = Some(color_value.g);
                         pending_update = true;
@@ -145,7 +149,7 @@ impl eframe::App for ColorGradeApp {
                 }
 
                 if let Some(b_old) = color_value.b_old {
-                    if (color_value.b != b_old) {
+                    if color_value.b != b_old {
                         // Update everything
                         color_value.b_old = Some(color_value.b);
                         pending_update = true;
@@ -155,7 +159,7 @@ impl eframe::App for ColorGradeApp {
                 }
 
                 if let Some(a_old) = color_value.a_old {
-                    if (color_value.a != a_old) {
+                    if color_value.a != a_old {
                         // Update everything
                         color_value.a_old = Some(color_value.a);
                         pending_update = true;
@@ -167,11 +171,28 @@ impl eframe::App for ColorGradeApp {
         }
         
         // Send all values to UE, if a slider values has changed
-        if (pending_update) {
-            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone()).unwrap();
+        if pending_update {
+            let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone())
+                .expect("Couldn't send values to UE.");
         }
 
-        //--- Main app ---
+        //--- Bottom panel ---
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            /*
+            if ui.button("Set Object Path").clicked() {
+                self.show_path_viewport = true;
+            }            
+            if ui.button("Set Target IP").clicked() {
+                self.show_ip_viewport = true;
+            }
+            */
+
+            ui.label("Configure Preset Buttons");
+
+            configmanager::configure_buttons(ui, &mut self.show_config_viewport);
+        });
+
+        //--- Main panel ---
         egui::CentralPanel::default().show(ctx, |ui| {
             let request = GetRequest::init(); 
             
@@ -191,12 +212,11 @@ impl eframe::App for ColorGradeApp {
                         }
                     }
                 }
-                if ui.button("Set Object Path").clicked() {
-                    self.show_path_viewport = true;
-                }            
-                if ui.button("Set Target IP").clicked() {
-                    self.show_ip_viewport = true;
-                }
+                ui.vertical(|ui| {
+                    ui.label(format!("UE Project: {}", self.project_name));
+                    ui.label(format!("IP Address: {}", self.ip_address));
+                    ui.label(format!("Path to BP: {}", self.object_path));
+                })
             });
             self.color_grade.create_sliderbox(ui);
         });
@@ -230,7 +250,8 @@ impl eframe::App for ColorGradeApp {
                 },
             );
         }
-
+        
+        /*
         // New window for setting the object path
         if self.show_path_viewport {
             ctx.show_viewport_immediate(
@@ -284,6 +305,51 @@ impl eframe::App for ColorGradeApp {
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
                         self.show_ip_viewport = false;
+                    }
+                },
+            );
+        }
+        */
+        // New window for configuring a preset button
+        if self.show_config_viewport {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("configure_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Configure Button")
+                    .with_inner_size([600.0, 400.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        
+                        ui.horizontal(|ui| {
+                            ui.label("Project:");
+                            ui.text_edit_singleline(&mut self.project_name);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Preset:");
+                            ui.text_edit_singleline(&mut self.preset_name);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("BP Object Path:");
+                            ui.text_edit_singleline(&mut self.object_path);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("IP Address:");
+                            ui.text_edit_singleline(&mut self.ip_address);
+                        });
+
+                        if ui.button("Save").clicked() {
+                            self.show_config_viewport = false;
+                        }
+                    });
+
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_config_viewport = false;
                     }
                 },
             );

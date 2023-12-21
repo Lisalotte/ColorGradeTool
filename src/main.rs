@@ -1,4 +1,4 @@
-use egui::{ViewportBuilder, Vec2};
+use egui::Vec2;
 
 pub mod app;
 pub mod colorgrade;

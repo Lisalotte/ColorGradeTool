@@ -1,8 +1,6 @@
 use serde_json::json;
 use serde_json::Value;
 
-use std::path::Path;
-
 use crate::colorgrade;
 
 fn to_json(color_values: &colorgrade::ColorValues) -> Value {
@@ -81,7 +79,7 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
 
         let folder_path_string = presets_folder_path.to_string_lossy().to_string();
 
-        if (!presets_folder_path.is_dir()) {
+        if !presets_folder_path.is_dir() {
             // Create the folder if it doesn't exist
             std::fs::create_dir_all(presets_folder_path).unwrap();
         }
