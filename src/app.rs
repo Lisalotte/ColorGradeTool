@@ -8,12 +8,11 @@ use remotecontrol::GetRequest;
 use crate::colorgrade::{self, ColorComponent};
 use rfd;
 
-use self::remotecontrol::update_everything;
-
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
     show_presetname_viewport: bool,
     show_path_viewport: bool,
+    show_ip_viewport: bool,
     preset_name: String,
     config_name: String,
     object_path: String,
@@ -102,6 +101,7 @@ impl ColorGradeApp {
             color_grade: color_grade_obj,
             show_presetname_viewport: false,
             show_path_viewport: false,
+            show_ip_viewport: false,
             config_name: String::from("default"),
             preset_name: String::from("preset"),
             object_path: object_path_init,
@@ -168,7 +168,7 @@ impl eframe::App for ColorGradeApp {
         
         // Send all values to UE, if a slider values has changed
         if (pending_update) {
-            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone()).unwrap();
+            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone()).unwrap();
         }
 
         //--- Main app ---
@@ -195,6 +195,7 @@ impl eframe::App for ColorGradeApp {
                     self.show_path_viewport = true;
                 }            
                 if ui.button("Set Target IP").clicked() {
+                    self.show_ip_viewport = true;
                 }
             });
             self.color_grade.create_sliderbox(ui);
@@ -254,6 +255,35 @@ impl eframe::App for ColorGradeApp {
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
                         self.show_path_viewport = false;
+                    }
+                },
+            );
+        }
+
+        // New window for setting the ip address
+        if self.show_ip_viewport {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("ip_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("IP Address")
+                    .with_inner_size([600.0, 200.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("IP Address:");
+                        ui.text_edit_singleline(&mut self.ip_address);
+                        if ui.button("Save").clicked() {
+                            self.show_ip_viewport = false;
+                        }
+                    });
+
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_ip_viewport = false;
                     }
                 },
             );
