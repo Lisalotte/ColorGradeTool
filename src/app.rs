@@ -2,11 +2,13 @@ mod remotecontrol;
 mod presetmanager;
 mod configmanager;
 
+use std::{thread, time};
+
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
 
-use self::remotecontrol::update_everything;
+use self::remotecontrol::{update_everything, check_connection};
 
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
@@ -18,6 +20,7 @@ pub struct ColorGradeApp {
     project_name: String,
     object_path: String,
     ip_address: String,
+    connection_ok: bool,
 }
 
 impl ColorGradeApp {
@@ -110,6 +113,7 @@ impl ColorGradeApp {
             preset_name: String::from("preset"),
             object_path: object_path_init,
             ip_address: ip_address_init,
+            connection_ok: false,
         }
     }
 }
@@ -121,6 +125,18 @@ impl eframe::App for ColorGradeApp {
 
         let mut pending_update = false;
 
+        // Check connection
+        if !self.connection_ok {
+            let check_connection = check_connection();
+
+            match check_connection {
+                Ok(()) => self.connection_ok = true,
+                Err(e) => { 
+                    println!("Error: {}", e);
+                },        
+            };
+        };
+       
         // For every slider box, check if any values have changed.
         // If so, update all values to UE
         for component  in self.color_grade.components.iter_mut() {
@@ -171,9 +187,11 @@ impl eframe::App for ColorGradeApp {
         }
         
         // Send all values to UE, if a slider values has changed
-        if pending_update {
-            let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone())
-                .expect("Couldn't send values to UE.");
+        if pending_update && self.connection_ok {
+            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone())
+                .expect("Error while sending values to UE.");
+            
+            self.connection_ok = false;
         }
 
         //--- Bottom panel ---

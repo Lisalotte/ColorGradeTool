@@ -1,4 +1,5 @@
 use reqwest;
+use reqwest::Response;
 use serde_json::json;
 use serde_json::Value;
 
@@ -34,19 +35,15 @@ impl GetRequest {
     }
 }
 
-pub fn send_request(request: Value) -> Result<(), reqwest::Error> {
+pub fn check_connection() -> Result<(), reqwest::Error> {
     let url_call = "http://127.0.0.1:30010/";
 
     let url = url_call.to_owned() + "remote/object/call";
 
-    // let client = reqwest::Client::new(); TODO: async
     let client = reqwest::blocking::Client::new();
     let response = client.put(url)
-        .json(&request)
+        .json("test")
         .send()?;
-
-    let body = response.text()?;
-    println!("Response: {}", body);
 
     Ok(())
 }
@@ -80,7 +77,7 @@ pub fn update_everything(color_grade: &mut colorgrade::ColorGrade, path: String,
         "generateTransaction": "True"
     });
 
-    let response = client.put(url)
+    let response= client.put(url)
         .json(&request)
         .send()?;
 
