@@ -21,6 +21,7 @@ pub struct ColorGradeApp {
     object_path: String,
     ip_address: String,
     connection_ok: bool,
+    button_nr: i32,
 }
 
 impl ColorGradeApp {
@@ -114,6 +115,7 @@ impl ColorGradeApp {
             object_path: object_path_init,
             ip_address: ip_address_init,
             connection_ok: false,
+            button_nr: 0,
         }
     }
 }
@@ -228,7 +230,7 @@ impl eframe::App for ColorGradeApp {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 ui.label("Configure Preset Buttons");
 
-                configmanager::configure_buttons(ui, &mut self.show_config_viewport);
+                configmanager::configure_buttons(ui, &mut self.show_config_viewport, &mut self.button_nr);                
             });
 
             //--- Main panel ---
@@ -365,24 +367,35 @@ impl eframe::App for ColorGradeApp {
 
                     egui::CentralPanel::default().show(ctx, |ui| {
                         
+                        /*
+                        Todo: 
+                        This doesn't work because the window keeps updating.
+                        */
+                        
+                        let mut project_name = self.project_name.clone();
+                        let mut preset_name = self.preset_name.clone();
+                        let mut ip_address = self.ip_address.clone();
+                        let mut object_path = self.object_path.clone();
+
                         ui.horizontal(|ui| {
                             ui.label("Project:");
-                            ui.text_edit_singleline(&mut self.project_name);
+                            ui.text_edit_singleline(&mut project_name); 
                         });
                         ui.horizontal(|ui| {
                             ui.label("Preset:");
-                            ui.text_edit_singleline(&mut self.preset_name);
+                            ui.text_edit_singleline(&mut preset_name);
                         });
                         ui.horizontal(|ui| {
                             ui.label("BP Object Path:");
-                            ui.text_edit_singleline(&mut self.object_path);
+                            ui.text_edit_singleline(&mut object_path);
                         });
                         ui.horizontal(|ui| {
                             ui.label("IP Address:");
-                            ui.text_edit_singleline(&mut self.ip_address);
+                            ui.text_edit_singleline(&mut ip_address);
                         });
 
                         if ui.button("Save").clicked() {
+                            configmanager::save_config(&format!("button{}.json", &self.button_nr), &self.object_path, &self.preset_name, &self.ip_address, &self.project_name);
                             self.show_config_viewport = false;
                         }
                     });
