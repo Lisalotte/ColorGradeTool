@@ -127,7 +127,7 @@ impl eframe::App for ColorGradeApp {
 
         // Check connection
         if !self.connection_ok {
-            let check_connection = check_connection();
+            let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
 
             match check_connection {
                 Ok(()) => self.connection_ok = true,
@@ -188,56 +188,79 @@ impl eframe::App for ColorGradeApp {
         
         // Send all values to UE, if a slider values has changed
         if pending_update && self.connection_ok {
-            remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone())
-                .expect("Error while sending values to UE.");
+            let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone());
             
-            self.connection_ok = false;
+            match update_everything {
+                Ok(()) => {
+                    self.connection_ok = true;
+                },
+                Err(e) => {
+                    self.connection_ok = false;
+                    println!("Error: {}", e);
+                }
+            }
         }
 
-        //--- Bottom panel ---
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            /*
-            if ui.button("Set Object Path").clicked() {
-                self.show_path_viewport = true;
-            }            
-            if ui.button("Set Target IP").clicked() {
-                self.show_ip_viewport = true;
-            }
-            */
+        if self.connection_ok {
 
-            ui.label("Configure Preset Buttons");
+            //--- Top panel ---
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(format!("UE Project: {}", self.project_name));
+                        ui.horizontal(|ui| {
+                            if ui.button("Set Target IP").clicked() {
+                                self.show_ip_viewport = true;
+                            }
+                            ui.label(format!("IP: {}", self.ip_address));
+                        });
+                        ui.horizontal(|ui| {
+                            if ui.button("Set Object Path").clicked() {
+                                self.show_path_viewport = true;
+                            }
+                            ui.label(format!("Path: {}", self.object_path));
+                        });         
+                    })
+                });
+            });
 
-            configmanager::configure_buttons(ui, &mut self.show_config_viewport);
-        });
+            //--- Bottom panel ---
+            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+                ui.label("Configure Preset Buttons");
 
-        //--- Main panel ---
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let request = GetRequest::init(); 
-            
-            ui.horizontal(|ui| {
-                // Menu buttons
-                if ui.button("Save Preset").clicked() {
-                    self.show_presetname_viewport = true;
-                }
-                if ui.button("Load Preset").clicked() { 
-                    // Open file dialog
-                    if let Ok(current_dir) = std::env::current_dir() {
-                        if let Some(path) = rfd::FileDialog::new()
-                        .set_directory(current_dir)
-                        .pick_file() {
-                            println!("Path: {}", path.display().to_string());
-                            presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                configmanager::configure_buttons(ui, &mut self.show_config_viewport);
+            });
+
+            //--- Main panel ---
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let request = GetRequest::init(); 
+
+                    // Menu buttons
+                ui.horizontal(|ui| {
+                    if ui.button("Save Preset").clicked() {
+                        self.show_presetname_viewport = true;
+                    }
+                    if ui.button("Load Preset").clicked() { 
+                        // Open file dialog
+                        if let Ok(current_dir) = std::env::current_dir() {
+                            if let Some(path) = rfd::FileDialog::new()
+                            .set_directory(current_dir)
+                            .pick_file() {
+                                println!("Path: {}", path.display().to_string());
+                                presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                            }
                         }
                     }
-                }
-                ui.vertical(|ui| {
-                    ui.label(format!("UE Project: {}", self.project_name));
-                    ui.label(format!("IP Address: {}", self.ip_address));
-                    ui.label(format!("Path to BP: {}", self.object_path));
-                })
+                });
+                
+                self.color_grade.create_sliderbox(ui);
             });
-            self.color_grade.create_sliderbox(ui);
-        });
+        }
+        else { //No connection with UE: show error message
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.label(format!("Trying to establish a connection with UE..."));
+            });
+        }
 
         // New window for saving a preset
         if self.show_presetname_viewport {
@@ -269,7 +292,6 @@ impl eframe::App for ColorGradeApp {
             );
         }
         
-        /*
         // New window for setting the object path
         if self.show_path_viewport {
             ctx.show_viewport_immediate(
@@ -327,7 +349,7 @@ impl eframe::App for ColorGradeApp {
                 },
             );
         }
-        */
+        
         // New window for configuring a preset button
         if self.show_config_viewport {
             ctx.show_viewport_immediate(

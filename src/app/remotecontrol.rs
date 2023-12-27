@@ -35,10 +35,9 @@ impl GetRequest {
     }
 }
 
-pub fn check_connection() -> Result<(), reqwest::Error> {
-    let url_call = "http://127.0.0.1:30010/";
+pub fn check_connection(path: String, ip: String) -> Result<(), reqwest::Error> {
 
-    let url = url_call.to_owned() + "remote/object/call";
+    let url = ip.to_owned() + "remote/object/call";
 
     let client = reqwest::blocking::Client::new();
     let response = client.put(url)
