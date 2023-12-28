@@ -2,7 +2,7 @@ mod remotecontrol;
 mod presetmanager;
 mod configmanager;
 
-use std::{thread, time};
+use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
@@ -15,7 +15,7 @@ pub struct ColorGradeApp {
     show_presetname_viewport: bool,
     show_path_viewport: bool,
     show_ip_viewport: bool,
-    show_config_viewport: bool,
+    show_config_viewport: Arc<AtomicBool>,
     preset_name: String,
     project_name: String,
     object_path: String,
@@ -101,15 +101,15 @@ impl ColorGradeApp {
         let mut project_name_init = String::from("");
         
         // Read default config file
-        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init, &mut project_name_init);
-    
+        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
+
         // Instantiate the color_grade struct
         Self {
             color_grade: color_grade_obj,
             show_presetname_viewport: false,
             show_path_viewport: false,
             show_ip_viewport: false,
-            show_config_viewport: false,
+            show_config_viewport: Arc::new(AtomicBool::new(false)),
             project_name: project_name_init,
             preset_name: String::from("preset"),
             object_path: object_path_init,
@@ -230,7 +230,9 @@ impl eframe::App for ColorGradeApp {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 ui.label("Configure Preset Buttons");
 
-                configmanager::configure_buttons(ui, &mut self.show_config_viewport, &mut self.button_nr);                
+                let mut show_config_viewport = self.show_config_viewport.load(Ordering::Relaxed);
+                configmanager::configure_buttons(ui, &mut show_config_viewport, &mut self.button_nr); 
+                self.show_config_viewport.store(show_config_viewport, Ordering::Relaxed);               
             });
 
             //--- Main panel ---
@@ -352,16 +354,24 @@ impl eframe::App for ColorGradeApp {
             );
         }
         
+        let show_config_viewport = self.show_config_viewport.clone();
+
         // New window for configuring a preset button
-        if self.show_config_viewport {
-            ctx.show_viewport_immediate(
+        if show_config_viewport.load(Ordering::Relaxed) {  
+            let project_name = String::from(self.project_name.as_str());
+            let preset_name = String::from(self.preset_name.as_str());
+            let ip_address = String::from(self.ip_address.as_str());
+            let object_path = String::from(self.object_path.as_str());
+            let button_nr = self.button_nr.clone();          
+
+            ctx.show_viewport_deferred(
                 egui::ViewportId::from_hash_of("configure_viewport"),
                 egui::ViewportBuilder::default()
                     .with_title("Configure Button")
                     .with_inner_size([600.0, 400.0]),
-                |ctx, class| {
+                move |ctx, class| {
                     assert!(
-                        class == egui::ViewportClass::Immediate,
+                        class == egui::ViewportClass::Deferred,
                         "This egui backend doesn't support multiple viewports"
                     );
 
@@ -372,37 +382,33 @@ impl eframe::App for ColorGradeApp {
                         This doesn't work because the window keeps updating.
                         */
                         
-                        let mut project_name = self.project_name.clone();
-                        let mut preset_name = self.preset_name.clone();
-                        let mut ip_address = self.ip_address.clone();
-                        let mut object_path = self.object_path.clone();
 
                         ui.horizontal(|ui| {
                             ui.label("Project:");
-                            ui.text_edit_singleline(&mut project_name); 
+                            ui.text_edit_singleline(&mut project_name.clone()); 
                         });
                         ui.horizontal(|ui| {
                             ui.label("Preset:");
-                            ui.text_edit_singleline(&mut preset_name);
+                            ui.text_edit_singleline(&mut preset_name.clone());
                         });
                         ui.horizontal(|ui| {
                             ui.label("BP Object Path:");
-                            ui.text_edit_singleline(&mut object_path);
+                            ui.text_edit_singleline(&mut object_path.clone());
                         });
                         ui.horizontal(|ui| {
                             ui.label("IP Address:");
-                            ui.text_edit_singleline(&mut ip_address);
+                            ui.text_edit_singleline(&mut ip_address.clone());
                         });
 
                         if ui.button("Save").clicked() {
-                            configmanager::save_config(&format!("button{}.json", &self.button_nr), &self.object_path, &self.preset_name, &self.ip_address, &self.project_name);
-                            self.show_config_viewport = false;
+                            configmanager::save_config(&format!("button{}.json", &button_nr), &object_path, &preset_name, &ip_address, &project_name);
+                            show_config_viewport.store(false, Ordering::Relaxed);
                         }
                     });
 
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
-                        self.show_config_viewport = false;
+                        show_config_viewport.store(false, Ordering::Relaxed);
                     }
                 },
             );
