@@ -67,7 +67,7 @@ pub fn get_presetname(config_path: &PathBuf) -> String {
     return String::from("");
 }
 
-pub fn save_config(config_buttons_folder: &str, config_file: &str, object_path: &str, preset_name: &str, ip_address: &str, project_name: &str) {
+pub fn save_config(config_folder: &str, config_file: &str, object_path: &str, preset_name: &str, ip_address: &str, project_name: &str) {
     
     let mut json_object = json!({
         "project_name" : project_name,
@@ -80,16 +80,18 @@ pub fn save_config(config_buttons_folder: &str, config_file: &str, object_path: 
 
     if let Ok(current_dir) = std::env::current_dir() {
         // Construct the path to the folder in the current working directory
-        let folder_path = current_dir.join(config_buttons_folder);
+        let folder_path = current_dir.join(config_folder);
 
         let folder_path_string = folder_path.to_string_lossy().to_string();
 
-        if folder_path.exists() { 
-            // Write the JSON string to a file
-            std::fs::write(format!("{folder_path_string}/{config_file}"), json_string).expect("Failed to write to file");
+        if !folder_path.exists() {
+            // Create the folder if it doesn't exist
+            std::fs::create_dir_all(folder_path).unwrap();
         }
-    }
 
+        // Write the JSON string to a file
+        std::fs::write(format!("{folder_path_string}/{config_file}"), json_string).expect("Failed to write to file");
+    }
 }
 
 pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_viewport: &mut bool, button_clicked: &mut i32) {

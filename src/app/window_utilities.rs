@@ -88,7 +88,7 @@ pub fn show_ip_viewport(app: &mut ColorGradeApp, ctx: &Context) {
     );
 }
 
-pub fn show_config_viewport(app: &mut ColorGradeApp, ctx: &Context) {
+pub fn show_config_button_viewport(app: &mut ColorGradeApp, ctx: &Context) {
      
     ctx.show_viewport_immediate(
         egui::ViewportId::from_hash_of("configure_viewport"),
@@ -127,6 +127,35 @@ pub fn show_config_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                         &app.button_config.preset_name, 
                         &app.button_config.ip_address, 
                         &app.button_config.project_name);
+                    app.show_config_viewport = false;
+                }
+            });
+
+            if ctx.input(|i| i.viewport().close_requested()) {
+                // Tell parent viewport that we should not show next frame:
+                app.show_config_viewport = false;
+            }
+        },
+    );
+}
+
+pub fn show_config_viewport(app: &mut ColorGradeApp, ctx: &Context) {
+    ctx.show_viewport_immediate(
+        egui::ViewportId::from_hash_of("configname_viewport"),
+        egui::ViewportBuilder::default()
+            .with_title("Config Name")
+            .with_inner_size([300.0, 200.0]),
+        |ctx, class| {
+            assert!(
+                class == egui::ViewportClass::Immediate,
+                "This egui backend doesn't support multiple viewports"
+            );
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.label("Save config as:");
+                ui.text_edit_singleline(&mut app.config_name);
+                if ui.button("Save").clicked() {
+                    configmanager::save_config("config/saved", &format!("{}.json", app.config_name), &app.object_path, &app.preset_name, &app.ip_address, &app.project_name);
                     app.show_config_viewport = false;
                 }
             });

@@ -36,6 +36,7 @@ pub struct ColorGradeApp {
     show_presetname_viewport: bool,
     show_path_viewport: bool,
     show_ip_viewport: bool,
+    show_config_button_viewport: bool,
     show_config_viewport: bool,
     preset_name: String,
     project_name: String,
@@ -43,6 +44,7 @@ pub struct ColorGradeApp {
     ip_address: String,
     connection_ok: bool,
     button_nr: i32,
+    config_name: String,
 
     button_config: ButtonConfig,
 }
@@ -132,6 +134,7 @@ impl ColorGradeApp {
             show_presetname_viewport: false,
             show_path_viewport: false,
             show_ip_viewport: false,
+            show_config_button_viewport: false,
             show_config_viewport: false,
             project_name: project_name_init,
             preset_name: String::from("preset"),
@@ -139,6 +142,7 @@ impl ColorGradeApp {
             ip_address: ip_address_init,
             connection_ok: false,
             button_nr: 0,
+            config_name: String::from("name"),
 
             button_config: ButtonConfig::new(String::from("default"), String::from("preset"), String::from("0.0.0.0"), String::from(""), 0),
         }
@@ -269,7 +273,7 @@ impl eframe::App for ColorGradeApp {
                             ui.label(format!("Path: {}", self.object_path));
                         });     
                         if ui.button("Save Config").clicked() {
-                            //configmanager::save_config("config", config_file, object_path, preset_name, ip_address, project_name)
+                            self.show_config_viewport = true;
                         }
                     })
                 });
@@ -280,7 +284,7 @@ impl eframe::App for ColorGradeApp {
                 ui.label("Configure Preset Buttons");
 
                 let mut clicked = false;
-                configmanager::configure_buttons(ui, &mut clicked, &mut self.show_config_viewport, &mut self.button_nr); 
+                configmanager::configure_buttons(ui, &mut clicked, &mut self.show_config_button_viewport, &mut self.button_nr); 
                 if clicked {
                     self.init_button_config();
                 }
@@ -332,9 +336,14 @@ impl eframe::App for ColorGradeApp {
             window_utilities::show_ip_viewport(self, ctx);
         }
         
-        // New window for configuring a preset button
-        if self.show_config_viewport { 
+        // New window for saving a config file
+        if self.show_config_viewport {
             window_utilities::show_config_viewport(self, ctx);
+        }
+
+        // New window for configuring a preset button
+        if self.show_config_button_viewport { 
+            window_utilities::show_config_button_viewport(self, ctx);
         }
     }
 }
