@@ -126,7 +126,7 @@ impl ColorGradeApp {
         let mut project_name_init = String::from("");
         
         // Read default config file
-        configmanager::setup("default.json", &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
+        configmanager::load_config(String::from("config/default.json"), &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
 
         // Instantiate the color_grade struct
         Self {
@@ -149,16 +149,6 @@ impl ColorGradeApp {
     }
 
     pub fn init_button_config(&mut self) {
-        /*
-        self.button_config = Some(ButtonConfig {
-            project_name: self.project_name,
-            preset_name: self.preset_name,
-            ip_address: self.ip_address,
-            object_path: self.object_path,
-            button_nr: self.button_nr,
-        });
-        */
-        
         self.button_config = ButtonConfig {  
             project_name: String::from(self.project_name.as_str()),
             preset_name: String::from(self.preset_name.as_str()),
@@ -257,26 +247,36 @@ impl eframe::App for ColorGradeApp {
 
             //--- Top panel ---
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label(format!("UE Project: {}", self.project_name));
-                        ui.horizontal(|ui| {
-                            if ui.button("Set Target IP").clicked() {
-                                self.show_ip_viewport = true;
+                ui.horizontal(|ui| {     
+                    if ui.button("Save Config").clicked() {
+                        self.show_config_viewport = true;
+                    }
+                    if ui.button("Load Config").clicked() {
+                        // Open file dialog
+                        if let Ok(current_dir) = std::env::current_dir() {
+                            if let Some(path) = rfd::FileDialog::new()
+                            .set_directory(current_dir)
+                            .pick_file() {
+                                configmanager::load_config(path.display().to_string(), &mut self.object_path, &mut self.ip_address, &mut self.project_name);
                             }
-                            ui.label(format!("IP: {}", self.ip_address));
-                        });
-                        ui.horizontal(|ui| {
-                            if ui.button("Set Object Path").clicked() {
-                                self.show_path_viewport = true;
-                            }
-                            ui.label(format!("Path: {}", self.object_path));
-                        });     
-                        if ui.button("Save Config").clicked() {
-                            self.show_config_viewport = true;
                         }
-                    })
+                    }    
                 });
+                ui.vertical(|ui| {
+                    ui.label(format!("UE Project: {}", self.project_name));
+                    ui.horizontal(|ui| {
+                        if ui.button("Set Target IP").clicked() {
+                            self.show_ip_viewport = true;
+                        }
+                        ui.label(format!("IP: {}", self.ip_address));
+                    });
+                    ui.horizontal(|ui| {
+                        if ui.button("Set Object Path").clicked() {
+                            self.show_path_viewport = true;
+                        }
+                        ui.label(format!("Path: {}", self.object_path));
+                    });  
+                })
             });
 
             //--- Bottom panel ---
