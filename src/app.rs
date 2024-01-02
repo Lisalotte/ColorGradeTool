@@ -2,6 +2,7 @@ mod remotecontrol;
 mod presetmanager;
 mod configmanager;
 mod window_utilities;
+mod style;
 
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
@@ -246,7 +247,9 @@ impl eframe::App for ColorGradeApp {
         if self.connection_ok {
 
             //--- Top panel ---
-            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui: &mut egui::Ui| {
+                ui.set_style(style::app_style());
+
                 ui.horizontal(|ui| {     
                     if ui.button("Save Config").clicked() {
                         self.show_config_viewport = true;
@@ -276,7 +279,7 @@ impl eframe::App for ColorGradeApp {
                         }
                         ui.label(format!("Path: {}", self.object_path));
                     });  
-                })
+                });
             });
 
             //--- Bottom panel ---

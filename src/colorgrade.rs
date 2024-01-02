@@ -70,6 +70,8 @@ impl ColorGrade {
 
     pub fn create_sliderbox(&mut self, ui: &mut egui::Ui) {
         for comp in self.components.iter_mut() {
+            ui.separator();
+            
             ui.label(&comp.name);
             ui.horizontal(|ui| {
                 comp.saturation.create_sliders(ui, "Saturation");
