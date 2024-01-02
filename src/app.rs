@@ -10,18 +10,40 @@ use rfd;
 
 use self::remotecontrol::{update_everything, check_connection};
 
+pub struct ButtonConfig {
+    project_name: String,
+    preset_name: String,
+    ip_address: String,
+    object_path: String,
+    button_nr: i32,
+}
+
+impl ButtonConfig {
+    fn new(project_name: String, preset_name: String, ip_address: String, object_path: String, button_nr: i32) -> Self {
+        Self {            
+            project_name: String::from(project_name.as_str()),
+            preset_name: String::from(preset_name.as_str()),
+            ip_address: String::from(ip_address.as_str()),
+            object_path: String::from(object_path.as_str()),
+            button_nr: button_nr.clone(),
+        }
+    }
+}
+
 pub struct ColorGradeApp {
     color_grade: colorgrade::ColorGrade,
     show_presetname_viewport: bool,
     show_path_viewport: bool,
     show_ip_viewport: bool,
-    show_config_viewport: Arc<AtomicBool>,
+    show_config_viewport: bool,
     preset_name: String,
     project_name: String,
     object_path: String,
     ip_address: String,
     connection_ok: bool,
     button_nr: i32,
+
+    button_config: ButtonConfig,
 }
 
 impl ColorGradeApp {
@@ -109,18 +131,41 @@ impl ColorGradeApp {
             show_presetname_viewport: false,
             show_path_viewport: false,
             show_ip_viewport: false,
-            show_config_viewport: Arc::new(AtomicBool::new(false)),
+            show_config_viewport: false,
             project_name: project_name_init,
             preset_name: String::from("preset"),
             object_path: object_path_init,
             ip_address: ip_address_init,
             connection_ok: false,
             button_nr: 0,
+
+            button_config: ButtonConfig::new(String::from("default"), String::from("preset"), String::from("0.0.0.0"), String::from(""), 0),
         }
+    }
+
+    pub fn init_button_config(&mut self) {
+        /*
+        self.button_config = Some(ButtonConfig {
+            project_name: self.project_name,
+            preset_name: self.preset_name,
+            ip_address: self.ip_address,
+            object_path: self.object_path,
+            button_nr: self.button_nr,
+        });
+        */
+        
+        self.button_config = ButtonConfig {  
+            project_name: String::from(self.project_name.as_str()),
+            preset_name: String::from(self.preset_name.as_str()),
+            ip_address: String::from(self.ip_address.as_str()),
+            object_path: String::from(self.object_path.as_str()),
+            button_nr: self.button_nr.clone(),
+        };  
     }
 }
 
 impl eframe::App for ColorGradeApp {
+
     // Called each time the UI needs repainting
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {       
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
@@ -230,9 +275,11 @@ impl eframe::App for ColorGradeApp {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 ui.label("Configure Preset Buttons");
 
-                let mut show_config_viewport = self.show_config_viewport.load(Ordering::Relaxed);
-                configmanager::configure_buttons(ui, &mut show_config_viewport, &mut self.button_nr); 
-                self.show_config_viewport.store(show_config_viewport, Ordering::Relaxed);               
+                let mut clicked = false;
+                configmanager::configure_buttons(ui, &mut clicked, &mut self.show_config_viewport, &mut self.button_nr); 
+                if clicked {
+                    self.init_button_config();
+                }
             });
 
             //--- Main panel ---
@@ -354,61 +401,51 @@ impl eframe::App for ColorGradeApp {
             );
         }
         
-        let show_config_viewport = self.show_config_viewport.clone();
-
         // New window for configuring a preset button
-        if show_config_viewport.load(Ordering::Relaxed) {  
-            let project_name = String::from(self.project_name.as_str());
-            let preset_name = String::from(self.preset_name.as_str());
-            let ip_address = String::from(self.ip_address.as_str());
-            let object_path = String::from(self.object_path.as_str());
-            let button_nr = self.button_nr.clone();          
-
-            ctx.show_viewport_deferred(
+        if self.show_config_viewport {  
+            ctx.show_viewport_immediate(
                 egui::ViewportId::from_hash_of("configure_viewport"),
                 egui::ViewportBuilder::default()
                     .with_title("Configure Button")
                     .with_inner_size([600.0, 400.0]),
-                move |ctx, class| {
+                |ctx, class| {
                     assert!(
-                        class == egui::ViewportClass::Deferred,
+                        class == egui::ViewportClass::Immediate,
                         "This egui backend doesn't support multiple viewports"
                     );
 
                     egui::CentralPanel::default().show(ctx, |ui| {
-                        
-                        /*
-                        Todo: 
-                        This doesn't work because the window keeps updating.
-                        */
-                        
-
                         ui.horizontal(|ui| {
                             ui.label("Project:");
-                            ui.text_edit_singleline(&mut project_name.clone()); 
+                            ui.text_edit_singleline(&mut self.button_config.project_name); 
                         });
                         ui.horizontal(|ui| {
                             ui.label("Preset:");
-                            ui.text_edit_singleline(&mut preset_name.clone());
+                            ui.text_edit_singleline(&mut self.button_config.preset_name);
                         });
                         ui.horizontal(|ui| {
                             ui.label("BP Object Path:");
-                            ui.text_edit_singleline(&mut object_path.clone());
+                            ui.text_edit_singleline(&mut self.button_config.object_path);
                         });
                         ui.horizontal(|ui| {
                             ui.label("IP Address:");
-                            ui.text_edit_singleline(&mut ip_address.clone());
+                            ui.text_edit_singleline(&mut self.button_config.ip_address);
                         });
 
                         if ui.button("Save").clicked() {
-                            configmanager::save_config(&format!("button{}.json", &button_nr), &object_path, &preset_name, &ip_address, &project_name);
-                            show_config_viewport.store(false, Ordering::Relaxed);
+                            configmanager::save_config(
+                                &format!("button{}.json", &self.button_config.button_nr), 
+                                &self.button_config.object_path, 
+                                &self.button_config.preset_name, 
+                                &self.button_config.ip_address, 
+                                &self.button_config.project_name);
+                            self.show_config_viewport = false;
                         }
                     });
 
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
-                        show_config_viewport.store(false, Ordering::Relaxed);
+                        self.show_config_viewport = false;
                     }
                 },
             );

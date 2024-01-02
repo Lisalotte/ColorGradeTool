@@ -2,6 +2,10 @@ use serde_json::json;
 use serde_json::Value;
 use std::path::PathBuf;
 
+use crate::colorgrade::ColorGrade;
+
+use super::ColorGradeApp;
+
 pub fn setup(config_file: &str, object_path: &mut String, ip_address: &mut String, project_name: &mut String) {
 
     // load config file
@@ -94,7 +98,7 @@ pub fn save_config(config_file: &str, object_path: &str, preset_name: &str, ip_a
 
 }
 
-pub fn configure_buttons(ui: &mut egui::Ui, show_config_viewport: &mut bool, button_clicked: &mut i32) {
+pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_viewport: &mut bool, button_clicked: &mut i32) {
 
     // For all files in the config folder
     if let Ok(current_dir) = std::env::current_dir() {
@@ -116,6 +120,7 @@ pub fn configure_buttons(ui: &mut egui::Ui, show_config_viewport: &mut bool, but
                 ui.label(format!("{} - {}", project_name, get_presetname(&actualpath)));
                 if ui.button( "Overwrite").clicked() {
                     *button_clicked = counter;
+                    *clicked = true;
                     *show_config_viewport = true;
                 }
             });
