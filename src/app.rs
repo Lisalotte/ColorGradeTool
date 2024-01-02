@@ -234,7 +234,7 @@ impl eframe::App for ColorGradeApp {
             }
         }
         
-        // Send all values to UE, if a slider values has changed
+        // Send all values to UE, if a slider value has changed
         if pending_update && self.connection_ok {
             let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone());
             
@@ -319,32 +319,7 @@ impl eframe::App for ColorGradeApp {
 
         // New window for saving a preset
         if self.show_presetname_viewport {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("presetname_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Preset Name")
-                    .with_inner_size([300.0, 200.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.label("Save preset as:");
-                        ui.text_edit_singleline(&mut self.preset_name);
-                        if ui.button("Save").clicked() {
-                            presetmanager::save_preset(&self.color_grade, &self.preset_name);
-                            self.show_presetname_viewport = false;
-                        }
-                    });
-
-                    if ctx.input(|i| i.viewport().close_requested()) {
-                        // Tell parent viewport that we should not show next frame:
-                        self.show_presetname_viewport = false;
-                    }
-                },
-            );
+            window_utilities::show_presetname_viewport(self, ctx);
         }
         
         // New window for setting the object path
