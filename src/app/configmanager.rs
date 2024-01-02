@@ -2,10 +2,6 @@ use serde_json::json;
 use serde_json::Value;
 use std::path::PathBuf;
 
-use crate::colorgrade::ColorGrade;
-
-use super::ColorGradeApp;
-
 pub fn setup(config_file: &str, object_path: &mut String, ip_address: &mut String, project_name: &mut String) {
 
     // load config file
@@ -71,7 +67,7 @@ pub fn get_presetname(config_path: &PathBuf) -> String {
     return String::from("");
 }
 
-pub fn save_config(config_file: &str, object_path: &str, preset_name: &str, ip_address: &str, project_name: &str) {
+pub fn save_config(config_buttons_folder: &str, config_file: &str, object_path: &str, preset_name: &str, ip_address: &str, project_name: &str) {
     
     let mut json_object = json!({
         "project_name" : project_name,
@@ -83,8 +79,6 @@ pub fn save_config(config_file: &str, object_path: &str, preset_name: &str, ip_a
     let json_string = serde_json::to_string_pretty(&json_object).expect("Failed to serialize to JSON");
 
     if let Ok(current_dir) = std::env::current_dir() {
-        let config_buttons_folder = "config/buttons";
-
         // Construct the path to the folder in the current working directory
         let folder_path = current_dir.join(config_buttons_folder);
 

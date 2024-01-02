@@ -1,6 +1,7 @@
 mod remotecontrol;
 mod presetmanager;
 mod configmanager;
+mod window_utilities;
 
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
@@ -266,7 +267,10 @@ impl eframe::App for ColorGradeApp {
                                 self.show_path_viewport = true;
                             }
                             ui.label(format!("Path: {}", self.object_path));
-                        });         
+                        });     
+                        if ui.button("Save Config").clicked() {
+                            //configmanager::save_config("config", config_file, object_path, preset_name, ip_address, project_name)
+                        }
                     })
                 });
             });
@@ -345,110 +349,17 @@ impl eframe::App for ColorGradeApp {
         
         // New window for setting the object path
         if self.show_path_viewport {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("objectpath_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Object Path")
-                    .with_inner_size([600.0, 200.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.label("Object Path:");
-                        ui.text_edit_singleline(&mut self.object_path);
-                        if ui.button("Save").clicked() {
-                            self.show_path_viewport = false;
-                        }
-                    });
-
-                    if ctx.input(|i| i.viewport().close_requested()) {
-                        // Tell parent viewport that we should not show next frame:
-                        self.show_path_viewport = false;
-                    }
-                },
-            );
+            window_utilities::show_path_viewport(self, ctx);
         }
 
         // New window for setting the ip address
         if self.show_ip_viewport {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("ip_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("IP Address")
-                    .with_inner_size([600.0, 200.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.label("IP Address:");
-                        ui.text_edit_singleline(&mut self.ip_address);
-                        if ui.button("Save").clicked() {
-                            self.show_ip_viewport = false;
-                        }
-                    });
-
-                    if ctx.input(|i| i.viewport().close_requested()) {
-                        // Tell parent viewport that we should not show next frame:
-                        self.show_ip_viewport = false;
-                    }
-                },
-            );
+            window_utilities::show_ip_viewport(self, ctx);
         }
         
         // New window for configuring a preset button
-        if self.show_config_viewport {  
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("configure_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Configure Button")
-                    .with_inner_size([600.0, 400.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label("Project:");
-                            ui.text_edit_singleline(&mut self.button_config.project_name); 
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("Preset:");
-                            ui.text_edit_singleline(&mut self.button_config.preset_name);
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("BP Object Path:");
-                            ui.text_edit_singleline(&mut self.button_config.object_path);
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("IP Address:");
-                            ui.text_edit_singleline(&mut self.button_config.ip_address);
-                        });
-
-                        if ui.button("Save").clicked() {
-                            configmanager::save_config(
-                                &format!("button{}.json", &self.button_config.button_nr), 
-                                &self.button_config.object_path, 
-                                &self.button_config.preset_name, 
-                                &self.button_config.ip_address, 
-                                &self.button_config.project_name);
-                            self.show_config_viewport = false;
-                        }
-                    });
-
-                    if ctx.input(|i| i.viewport().close_requested()) {
-                        // Tell parent viewport that we should not show next frame:
-                        self.show_config_viewport = false;
-                    }
-                },
-            );
+        if self.show_config_viewport { 
+            window_utilities::show_config_viewport(self, ctx);
         }
     }
 }
