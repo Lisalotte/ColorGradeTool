@@ -6,6 +6,7 @@ mod style;
 
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
+use egui::Pos2;
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
@@ -248,8 +249,8 @@ impl eframe::App for ColorGradeApp {
 
             //--- Top panel ---
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui: &mut egui::Ui| {
-                ui.set_style(style::app_style());
-
+                ui.set_style(style::app_style(ctx));
+                
                 ui.horizontal(|ui| {     
                     if ui.button("Save Config").clicked() {
                         self.show_config_viewport = true;

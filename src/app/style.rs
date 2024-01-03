@@ -1,6 +1,6 @@
-use egui::{style, Vec2, Color32, Stroke, Rounding};
+use egui::{style, Vec2, Color32, Stroke, Rounding, Context};
 
-pub fn app_style() -> egui::Style {
+pub fn app_style(ctx: &Context) -> egui::Style {
     let spacing = style::Spacing {
         item_spacing: Vec2 { x: 5.0, y: 5.0 },
         button_padding: Vec2 { x: 4.0, y: 2.0},
@@ -18,10 +18,19 @@ pub fn app_style() -> egui::Style {
         expansion: 0.0,
     };
 
-    let text_visuals = style::WidgetVisuals {
-        fg_stroke: Stroke::new(1.0, Color32::WHITE),
+    // Light Mode
+    let mut text_visuals = style::WidgetVisuals {
+        fg_stroke: Stroke::new(1.0, Color32::BLACK),
         ..widget_visuals
     };
+
+    // Dark Mode
+    if ctx.style().visuals.dark_mode {
+        text_visuals = style::WidgetVisuals {
+            fg_stroke: Stroke::new(1.0, Color32::WHITE),
+            ..widget_visuals
+        };
+    }    
 
     let widgets = style::Widgets {
         noninteractive: text_visuals,
@@ -42,6 +51,17 @@ pub fn app_style() -> egui::Style {
         visuals: visuals,
         ..Default::default()
     };
+
+    return style;
+}
+
+pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
+
+    
+
+    let style = style::Style {
+        ..Default::default()
+    }; 
 
     return style;
 }

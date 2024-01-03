@@ -1,3 +1,4 @@
+use egui_extras::{Column, TableBuilder};
 use serde_json::json;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -102,29 +103,56 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
 
         let mut counter = 0;
 
-        for path in paths {
-        // Create a button, with a maximum of 10 buttons
-            let mut project_name = String::from("");
+        let mut table = TableBuilder::new(ui)            
+            //.striped(TableBuilder::striped)
+            //.resizable(TableBuilder::resizable)
+            //.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+            .column(Column::auto())
+            //.column(Column::initial(100.0).range(40.0..=300.0))
+            //.column(Column::initial(100.0).at_least(40.0).clip(true))
+            .column(Column::remainder());
+            //.min_scrolled_height(0.0);
 
-            let actualpath = path.unwrap().path();
+        table           
+            .header(20.0, |mut header| {
+                header.col(|ui| {
+                    //ui.push_id(egui::Id::new(counter), |ui| {
+                        ui.heading("First column");
+                    //});
+                });
+            })
+            .body(|mut body| {
+                for path in paths {
+                    body.row(30.0, |mut row| {
+                        row.col(|ui| {
+                        // Create a button, with a maximum of 10 buttons
+                            let mut project_name = String::from("");
 
-            get_projectname(&actualpath, &mut project_name);
+                            let actualpath = path.unwrap().path();
 
-            ui.horizontal(|ui| {
-                ui.label(format!("{} - {}", project_name, get_presetname(&actualpath)));
-                if ui.button( "Overwrite").clicked() {
-                    *button_clicked = counter;
-                    *clicked = true;
-                    *show_config_viewport = true;
+                            get_projectname(&actualpath, &mut project_name);
+
+                            //ui.push_id(egui::Id::new("table"), |ui| {
+                        
+                            ui.horizontal(|ui| {
+                                ui.label(format!("{} - {}", project_name, get_presetname(&actualpath)));
+                            });
+                        });
+                        row.col(|ui| {
+                            if ui.button( "Overwrite").clicked() {
+                                *button_clicked = counter;
+                                *clicked = true;
+                                *show_config_viewport = true;
+                            }
+                        });
+                    });
+                    if counter > 9 {
+                        break;
+                    } else {
+                        counter += 1;
+                    }
                 }
-            });
-
-            if counter > 9 {
-                break;
-            } else {
-                counter += 1;
-            }
-        }
+        });
     }
 
     // Load the preset connected to the first button (which is always default.json - for now)
