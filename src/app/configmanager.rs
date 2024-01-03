@@ -1,3 +1,4 @@
+use egui::{RichText, Color32};
 use egui_extras::{Column, TableBuilder};
 use serde_json::json;
 use serde_json::Value;
@@ -103,6 +104,7 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
 
         let mut counter = 0;
 
+        /*
         let mut table = TableBuilder::new(ui)            
             //.striped(TableBuilder::striped)
             //.resizable(TableBuilder::resizable)
@@ -113,14 +115,7 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
             .column(Column::remainder());
             //.min_scrolled_height(0.0);
 
-        table           
-            .header(20.0, |mut header| {
-                header.col(|ui| {
-                    //ui.push_id(egui::Id::new(counter), |ui| {
-                        ui.heading("First column");
-                    //});
-                });
-            })
+        table
             .body(|mut body| {
                 for path in paths {
                     body.row(30.0, |mut row| {
@@ -131,8 +126,6 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
                             let actualpath = path.unwrap().path();
 
                             get_projectname(&actualpath, &mut project_name);
-
-                            //ui.push_id(egui::Id::new("table"), |ui| {
                         
                             ui.horizontal(|ui| {
                                 ui.label(format!("{} - {}", project_name, get_presetname(&actualpath)));
@@ -152,6 +145,41 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
                         counter += 1;
                     }
                 }
+        });
+        */
+
+        egui::Grid::new("new_grid").show(ui, |ui| {
+            for path in paths {
+                // Create a button, with a maximum of 10 buttons
+                let mut project_name = String::from("");
+
+                let actualpath = path.unwrap().path();
+
+                get_projectname(&actualpath, &mut project_name);
+            
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new(
+                            format!("{} - {}", project_name, get_presetname(&actualpath)))
+                        .color(Color32::BLACK)
+                        .background_color(Color32::LIGHT_GRAY)
+                    )
+                });
+
+                if ui.button( "Overwrite").clicked() {
+                    *button_clicked = counter;
+                    *clicked = true;
+                    *show_config_viewport = true;
+                }
+
+                ui.end_row();
+
+                if counter > 9 {
+                    break;
+                } else {
+                    counter += 1;
+                }
+            }
         });
     }
 

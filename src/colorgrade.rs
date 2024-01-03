@@ -68,17 +68,29 @@ impl ColorGrade {
         }
     }
 
+    fn capitalize(s: &str) -> String {
+        if let Some(mut chars) = s.chars().next() {
+            chars.make_ascii_uppercase();
+            let mut result = chars.to_string();
+            result.push_str(&s[1..]);
+            return result;
+        } else {
+            return s.to_string() // Empty string
+        }
+    }
+
     pub fn create_sliderbox(&mut self, ui: &mut egui::Ui) {
         for comp in self.components.iter_mut() {
-            ui.separator();
             
-            ui.label(&comp.name);
+            ui.heading(Self::capitalize(&comp.name));
             ui.horizontal(|ui| {
                 comp.saturation.create_sliders(ui, "Saturation");
                 comp.contrast.create_sliders(ui, "Contrast");
                 comp.gamma.create_sliders(ui, "Gamma");
                 comp.gain.create_sliders(ui, "Gain");
             });
+            
+            ui.separator();
         }
     }
 }

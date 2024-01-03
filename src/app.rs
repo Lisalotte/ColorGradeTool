@@ -6,7 +6,7 @@ mod style;
 
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
-use egui::Pos2;
+use egui::{Pos2, TextStyle, CollapsingHeader, RichText, Color32};
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
@@ -250,7 +250,7 @@ impl eframe::App for ColorGradeApp {
             //--- Top panel ---
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui: &mut egui::Ui| {
                 ui.set_style(style::app_style(ctx));
-                
+
                 ui.horizontal(|ui| {     
                     if ui.button("Save Config").clicked() {
                         self.show_config_viewport = true;
@@ -285,7 +285,9 @@ impl eframe::App for ColorGradeApp {
 
             //--- Bottom panel ---
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-                ui.label("Configure Preset Buttons");
+                ui.set_style(style::app_style(ctx));
+                
+                ui.heading("Configure Preset Buttons");
 
                 let mut clicked = false;
                 configmanager::configure_buttons(ui, &mut clicked, &mut self.show_config_button_viewport, &mut self.button_nr); 

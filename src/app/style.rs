@@ -1,10 +1,17 @@
-use egui::{style, Vec2, Color32, Stroke, Rounding, Context};
+use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin};
+use egui::TextStyle::*;
+use egui::FontId;
+use egui::FontFamily::Proportional;
 
 pub fn app_style(ctx: &Context) -> egui::Style {
+    let m = 20.0;
+
     let spacing = style::Spacing {
         item_spacing: Vec2 { x: 5.0, y: 5.0 },
         button_padding: Vec2 { x: 4.0, y: 2.0},
         text_edit_width: 80.0,
+        window_margin: Margin { left: m, right: m, top: m, bottom: m },
+        menu_margin: Margin { left: m, right: m, top: m, bottom: m },
         ..Default::default()
     };
 
@@ -57,11 +64,21 @@ pub fn app_style(ctx: &Context) -> egui::Style {
 
 pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
 
-    
+    let mut style = app_style(ctx);
 
-    let style = style::Style {
-        ..Default::default()
-    }; 
+    // Redefine text_styles
+    style.text_styles = [
+        (Heading, FontId::new(30.0, Proportional)),
+        (Name("Heading2".into()), FontId::new(25.0, Proportional)),
+        (Name("Context".into()), FontId::new(23.0, Proportional)),
+        (Body, FontId::new(18.0, Proportional)),
+        (Monospace, FontId::new(14.0, Proportional)),
+        (Button, FontId::new(14.0, Proportional)),
+        (Small, FontId::new(10.0, Proportional)),
+    ].into();
+
+    
+  
 
     return style;
 }
