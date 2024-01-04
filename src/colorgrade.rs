@@ -90,7 +90,6 @@ impl ColorGrade {
                 comp.gain.create_sliders(ui, "Gain");
             });
             
-            ui.separator();
         }
     }
 }

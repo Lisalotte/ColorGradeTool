@@ -11,7 +11,7 @@ fn main() {
     let windowsize = Vec2::new(800.0, 680.0);
 
     let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size(windowsize),
+        viewport: egui::ViewportBuilder::default().with_min_inner_size(windowsize),
         ..Default::default()
     };
 

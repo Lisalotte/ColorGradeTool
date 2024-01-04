@@ -127,13 +127,16 @@ pub fn show_config_button_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                         &app.button_config.preset_name, 
                         &app.button_config.ip_address, 
                         &app.button_config.project_name);
-                    app.show_config_viewport = false;
+                    app.show_config_button_viewport = false;
+                }
+                if ui.button("Cancel").clicked() {
+                    app.show_config_button_viewport = false;
                 }
             });
 
             if ctx.input(|i| i.viewport().close_requested()) {
                 // Tell parent viewport that we should not show next frame:
-                app.show_config_viewport = false;
+                app.show_config_button_viewport = false;
             }
         },
     );
@@ -163,6 +166,41 @@ pub fn show_config_viewport(app: &mut ColorGradeApp, ctx: &Context) {
             if ctx.input(|i| i.viewport().close_requested()) {
                 // Tell parent viewport that we should not show next frame:
                 app.show_config_viewport = false;
+            }
+        },
+    );
+}
+
+
+pub fn show_popup(app: &mut ColorGradeApp, ctx: &Context, button_nr: i32) {    
+    ctx.show_viewport_immediate(
+        egui::ViewportId::from_hash_of("popup"),
+        egui::ViewportBuilder::default()
+            .with_title("Warning")
+            .with_inner_size([300.0, 200.0]),
+        |ctx, class| {
+            assert!(
+                class == egui::ViewportClass::Immediate,
+                "This egui backend doesn't support multiple viewports"
+            );
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.label("Load Config?");
+                if ui.button("Yes").clicked() {
+                    //configmanager::save_config("config/saved", &format!("{}.json", app.config_name), &app.object_path, &app.preset_name, &app.ip_address, &app.project_name);
+                    configmanager::load_config(format!("config/buttons/button{}.json", button_nr), &mut app.preset_name, &mut app.object_path, &mut app.ip_address, &mut app.project_name);
+                    presetmanager::load_preset(&mut app.color_grade, format!("presets/{}.json", app.preset_name));
+                    app.show_popup = false;
+                }
+                if ui.button("No").clicked() {
+                    //configmanager::save_config("config/saved", &format!("{}.json", app.config_name), &app.object_path, &app.preset_name, &app.ip_address, &app.project_name);
+                    app.show_popup = false;
+                }
+            });
+
+            if ctx.input(|i| i.viewport().close_requested()) {
+                // Tell parent viewport that we should not show next frame:
+                app.show_popup = false;
             }
         },
     );

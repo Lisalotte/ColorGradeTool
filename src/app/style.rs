@@ -1,4 +1,5 @@
-use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin};
+use egui::epaint::Shadow;
+use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin, Frame};
 use egui::TextStyle::*;
 use egui::FontId;
 use egui::FontFamily::Proportional;
@@ -76,9 +77,23 @@ pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
         (Button, FontId::new(14.0, Proportional)),
         (Small, FontId::new(10.0, Proportional)),
     ].into();
-
-    
   
 
     return style;
+}
+
+pub fn toppanel_frame(ctx: &Context) -> Frame {
+    let m = 10.0;
+    let o = 0.0;
+
+    let frame = Frame { 
+        inner_margin: Margin { left: m, right: m, top: m, bottom: m }, 
+        outer_margin: Margin { left: o, right: o, top: o, bottom: o }, 
+        rounding: Rounding::default(), 
+        shadow: Shadow::default(), 
+        fill: ctx.style().visuals.panel_fill, 
+        stroke: Stroke::default() 
+    };
+
+    return frame;
 }

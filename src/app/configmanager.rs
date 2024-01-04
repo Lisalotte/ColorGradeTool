@@ -1,5 +1,7 @@
-use egui::{RichText, Color32};
+use egui::{RichText, Color32, Context};
 use egui_extras::{Column, TableBuilder};
+use egui_modal::DialogBuilder;
+use egui_modal::Modal;
 use serde_json::json;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -60,7 +62,7 @@ pub fn save_config(config_folder: &str, config_file: &str, object_path: &str, pr
     }
 }
 
-pub fn load_config(path: String, object_path: &mut String, ip_address: &mut String, project_name: &mut String) {
+pub fn load_config(path: String, preset_name: &mut String, object_path: &mut String, ip_address: &mut String, project_name: &mut String) {
     // load config file
     if let Ok(current_dir) = std::env::current_dir() {
         let config_path = current_dir.join(path);
@@ -70,12 +72,18 @@ pub fn load_config(path: String, object_path: &mut String, ip_address: &mut Stri
 
             let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
 
+            if let Some(object_preset_value) = json_object["preset"].as_str() {
+                *preset_name = object_preset_value.to_string();
+            } else {
+                println!("Error: 'preset' field not found or not a string in the config file.");
+            }
+
             if let Some(object_path_value) = json_object["path"].as_str() {
                 *object_path = object_path_value.to_string();
             } else {
                 println!("Error: 'path' field not found or not a string in the config file.");
             }
-            
+
             if let Some(ip_address_value) = json_object["ip"].as_str() {
                 *ip_address = ip_address_value.to_string();
             } else {
@@ -94,7 +102,7 @@ pub fn load_config(path: String, object_path: &mut String, ip_address: &mut Stri
     }
 }
 
-pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_viewport: &mut bool, button_clicked: &mut i32) {
+pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, show_config_viewport: &mut bool, show_popup: &mut bool, button_clicked: &mut i32) {
 
     // For all files in the config folder
     if let Ok(current_dir) = std::env::current_dir() {
@@ -103,50 +111,8 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
         let paths = std::fs::read_dir(config_folder).unwrap();
 
         let mut counter = 0;
-
-        /*
-        let mut table = TableBuilder::new(ui)            
-            //.striped(TableBuilder::striped)
-            //.resizable(TableBuilder::resizable)
-            //.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-            .column(Column::auto())
-            //.column(Column::initial(100.0).range(40.0..=300.0))
-            //.column(Column::initial(100.0).at_least(40.0).clip(true))
-            .column(Column::remainder());
-            //.min_scrolled_height(0.0);
-
-        table
-            .body(|mut body| {
-                for path in paths {
-                    body.row(30.0, |mut row| {
-                        row.col(|ui| {
-                        // Create a button, with a maximum of 10 buttons
-                            let mut project_name = String::from("");
-
-                            let actualpath = path.unwrap().path();
-
-                            get_projectname(&actualpath, &mut project_name);
-                        
-                            ui.horizontal(|ui| {
-                                ui.label(format!("{} - {}", project_name, get_presetname(&actualpath)));
-                            });
-                        });
-                        row.col(|ui| {
-                            if ui.button( "Overwrite").clicked() {
-                                *button_clicked = counter;
-                                *clicked = true;
-                                *show_config_viewport = true;
-                            }
-                        });
-                    });
-                    if counter > 9 {
-                        break;
-                    } else {
-                        counter += 1;
-                    }
-                }
-        });
-        */
+        let col_max = 2;
+        let mut col = 1;
 
         egui::Grid::new("new_grid").show(ui, |ui| {
             for path in paths {
@@ -157,13 +123,14 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
 
                 get_projectname(&actualpath, &mut project_name);
             
+                // let text = RichText::new(
+                //     format!("{} - {}", project_name, get_presetname(&actualpath)))
+                //     .color(Color32::BLACK)
+                //     .background_color(Color32::LIGHT_GRAY);
+                let text = format!("{} - {}", project_name, get_presetname(&actualpath));
+
                 ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new(
-                            format!("{} - {}", project_name, get_presetname(&actualpath)))
-                        .color(Color32::BLACK)
-                        .background_color(Color32::LIGHT_GRAY)
-                    )
+                    ui.label(text)
                 });
 
                 if ui.button( "Overwrite").clicked() {
@@ -172,7 +139,21 @@ pub fn configure_buttons(ui: &mut egui::Ui, clicked: &mut bool, show_config_view
                     *show_config_viewport = true;
                 }
 
-                ui.end_row();
+                if ui.button("Load").clicked() {
+                    // Show warning
+                    // if yes, load config
+                    *button_clicked = counter;
+                    *clicked = true;
+                    *show_popup = true;
+                                        
+                }
+
+                if col == col_max {
+                    ui.end_row();
+                    col = 1;
+                } else {
+                    col += 1;
+                }
 
                 if counter > 9 {
                     break;

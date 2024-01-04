@@ -7,6 +7,7 @@ mod style;
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
 
 use egui::{Pos2, TextStyle, CollapsingHeader, RichText, Color32};
+use egui_modal::{Modal, DialogBuilder};
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
@@ -40,6 +41,7 @@ pub struct ColorGradeApp {
     show_ip_viewport: bool,
     show_config_button_viewport: bool,
     show_config_viewport: bool,
+    show_popup: bool,
     preset_name: String,
     project_name: String,
     object_path: String,
@@ -126,9 +128,10 @@ impl ColorGradeApp {
         let mut object_path_init = String::from("");
         let mut ip_address_init = String::from("");
         let mut project_name_init = String::from("");
-        
+        let mut preset_name_init = String::from("preset");
+
         // Read default config file
-        configmanager::load_config(String::from("config/default.json"), &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
+        configmanager::load_config(String::from("config/default.json"), &mut preset_name_init, &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
 
         // Instantiate the color_grade struct
         Self {
@@ -138,8 +141,9 @@ impl ColorGradeApp {
             show_ip_viewport: false,
             show_config_button_viewport: false,
             show_config_viewport: false,
+            show_popup: false,
             project_name: project_name_init,
-            preset_name: String::from("preset"),
+            preset_name: preset_name_init,
             object_path: object_path_init,
             ip_address: ip_address_init,
             connection_ok: false,
@@ -248,8 +252,11 @@ impl eframe::App for ColorGradeApp {
         if self.connection_ok {
 
             //--- Top panel ---
-            egui::TopBottomPanel::top("top_panel").show(ctx, |ui: &mut egui::Ui| {
-                ui.set_style(style::app_style(ctx));
+            egui::TopBottomPanel::top("top_panel")
+            .min_height(80.0)
+            .frame(style::toppanel_frame(ctx))
+            .show(ctx, |ui: &mut egui::Ui| {
+                //ui.set_style(style::app_style(ctx));
 
                 ui.horizontal(|ui| {     
                     if ui.button("Save Config").clicked() {
@@ -261,7 +268,8 @@ impl eframe::App for ColorGradeApp {
                             if let Some(path) = rfd::FileDialog::new()
                             .set_directory(current_dir)
                             .pick_file() {
-                                configmanager::load_config(path.display().to_string(), &mut self.object_path, &mut self.ip_address, &mut self.project_name);
+                                configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
+                                presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
                             }
                         }
                     }    
@@ -284,13 +292,16 @@ impl eframe::App for ColorGradeApp {
             });
 
             //--- Bottom panel ---
-            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-                ui.set_style(style::app_style(ctx));
+            egui::TopBottomPanel::bottom("bottom_panel")
+            .min_height(120.0)
+            .frame(style::toppanel_frame(ctx))
+            .show(ctx, |ui| {
+                //ui.set_style(style::app_style(ctx));
                 
                 ui.heading("Configure Preset Buttons");
 
                 let mut clicked = false;
-                configmanager::configure_buttons(ui, &mut clicked, &mut self.show_config_button_viewport, &mut self.button_nr); 
+                configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
                 if clicked {
                     self.init_button_config();
                 }
@@ -350,6 +361,10 @@ impl eframe::App for ColorGradeApp {
         // New window for configuring a preset button
         if self.show_config_button_viewport { 
             window_utilities::show_config_button_viewport(self, ctx);
+        }
+
+        if self.show_popup {
+            window_utilities::show_popup(self, ctx, self.button_config.button_nr);
         }
     }
 }

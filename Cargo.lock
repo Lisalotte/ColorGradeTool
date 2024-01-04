@@ -688,6 +688,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
+ "egui-modal",
  "egui_extras",
  "reqwest",
  "rfd",
@@ -885,6 +886,15 @@ dependencies = [
  "log",
  "nohash-hasher",
  "serde",
+]
+
+[[package]]
+name = "egui-modal"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f606099ee8ae25afed745612a2854435c63bf4eb8b6f38859fd44d95f0f1d01d"
+dependencies = [
+ "egui",
 ]
 
 [[package]]
