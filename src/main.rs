@@ -4,11 +4,10 @@ pub mod app;
 pub mod colorgrade;
 
 fn main() {
-    println!("Hello, world!");
-
+    
     // Settings for the egui viewport
 
-    let windowsize = Vec2::new(800.0, 680.0);
+    let windowsize = Vec2::new(800.0, 780.0);
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_min_inner_size(windowsize),

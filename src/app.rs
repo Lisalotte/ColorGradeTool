@@ -253,10 +253,12 @@ impl eframe::App for ColorGradeApp {
 
             //--- Top panel ---
             egui::TopBottomPanel::top("top_panel")
+            .resizable(true)
             .min_height(80.0)
             .frame(style::toppanel_frame(ctx))
             .show(ctx, |ui: &mut egui::Ui| {
                 //ui.set_style(style::app_style(ctx));
+                ui.heading("Configuration");
 
                 ui.horizontal(|ui| {     
                     if ui.button("Save Config").clicked() {
@@ -289,14 +291,17 @@ impl eframe::App for ColorGradeApp {
                         ui.label(format!("Path: {}", self.object_path));
                     });  
                 });
+                
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
             });
 
             //--- Bottom panel ---
             egui::TopBottomPanel::bottom("bottom_panel")
+            .resizable(true)
             .min_height(120.0)
             .frame(style::toppanel_frame(ctx))
             .show(ctx, |ui| {
-                //ui.set_style(style::app_style(ctx));
+                // ui.set_style(style::app_style(ctx));
                 
                 ui.heading("Configure Preset Buttons");
 
@@ -305,13 +310,19 @@ impl eframe::App for ColorGradeApp {
                 if clicked {
                     self.init_button_config();
                 }
+
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
             });
 
             //--- Main panel ---
-            egui::CentralPanel::default().show(ctx, |ui| {
+            egui::CentralPanel::default()
+            .show(ctx, |ui| {
                 let request = GetRequest::init(); 
 
-                    // Menu buttons
+                ui.heading("Preset");
+                ui.set_style(style::app_style(ctx));
+
+                // Menu buttons
                 ui.horizontal(|ui| {
                     if ui.button("Save Preset").clicked() {
                         self.show_presetname_viewport = true;
@@ -330,6 +341,8 @@ impl eframe::App for ColorGradeApp {
                 });
                 
                 self.color_grade.create_sliderbox(ui);
+
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
             });
         }
         else { //No connection with UE: show error message
