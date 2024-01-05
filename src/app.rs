@@ -4,7 +4,7 @@ mod configmanager;
 mod window_utilities;
 mod style;
 
-use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}};
+use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}, ffi::OsStr};
 
 use egui::{Pos2, TextStyle, CollapsingHeader, RichText, Color32};
 use egui_modal::{Modal, DialogBuilder};
@@ -279,7 +279,21 @@ impl eframe::App for ColorGradeApp {
                 ui.set_style(style::app_style(ctx));
 
                 ui.vertical(|ui| {
-                    ui.label(format!("UE Project: {}", self.project_name));
+                    ui.horizontal(|ui| {
+                        if ui.button("Select UE Project").clicked() {
+                            // Open file dialog
+                            if let Ok(current_dir) = std::env::current_dir() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                .set_directory(current_dir)
+                                .pick_file() {
+                                    if path.extension() == Some(OsStr::new("uproject")) {
+                                        self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
+                                    }
+                                }
+                            }
+                        }
+                        ui.label(format!("UE Project: {}", self.project_name));
+                    });
                     ui.horizontal(|ui| {
                         if ui.button("Set Target IP").clicked() {
                             self.show_ip_viewport = true;
