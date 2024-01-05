@@ -49,7 +49,7 @@ pub fn app_style(ctx: &Context) -> egui::Style {
         ..Default::default()
     };
 
-    let visuals = style::Visuals {
+    let mut visuals = style::Visuals {
         widgets: widgets,
         ..Default::default()
     };
@@ -82,11 +82,11 @@ pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
     return style;
 }
 
-pub fn toppanel_frame(ctx: &Context) -> Frame {
+pub fn panel_frame(ctx: &Context) -> Frame {
     let m = 10.0;
     let o = 0.0;
 
-    let frame = Frame { 
+    let mut frame = Frame { 
         inner_margin: Margin { left: m, right: m, top: m, bottom: m }, 
         outer_margin: Margin { left: o, right: o, top: o, bottom: o }, 
         rounding: Rounding::default(), 
@@ -94,6 +94,11 @@ pub fn toppanel_frame(ctx: &Context) -> Frame {
         fill: ctx.style().visuals.panel_fill, 
         stroke: Stroke::default() 
     };
+
+    // Light Mode
+    if !ctx.style().visuals.dark_mode {
+        frame.fill = Color32::from_gray(200);
+    }    
 
     return frame;
 }

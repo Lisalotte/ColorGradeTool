@@ -255,7 +255,7 @@ impl eframe::App for ColorGradeApp {
             egui::TopBottomPanel::top("top_panel")
             .resizable(true)
             .min_height(80.0)
-            .frame(style::toppanel_frame(ctx))
+            .frame(style::panel_frame(ctx))
             .show(ctx, |ui: &mut egui::Ui| {
 
                 ui.horizontal(|ui| {   
@@ -315,7 +315,7 @@ impl eframe::App for ColorGradeApp {
             egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(true)
             .min_height(120.0)
-            .frame(style::toppanel_frame(ctx))
+            .frame(style::panel_frame(ctx))
             .show(ctx, |ui| {                
                 ui.set_style(style::configure_buttons_style(ctx));
 
@@ -332,6 +332,7 @@ impl eframe::App for ColorGradeApp {
 
             //--- Main panel ---
             egui::CentralPanel::default()
+            .frame(style::panel_frame(ctx))
             .show(ctx, |ui| {
                 let request = GetRequest::init(); 
                 ui.set_style(style::bigger_buttons(ctx));
