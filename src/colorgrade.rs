@@ -18,10 +18,73 @@ impl ColorValues {
         ui.vertical(|ui| {            
             ui.label(name);
             //self.add_sliderbox(ui);
-            ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0).text("R"));
-            ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0).text("G"));
-            ui.add(egui::Slider::new(&mut self.b, 0.0..=2.0).text("B"));
-            ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0).text("A"));
+            
+            let step = 0.1;
+            let minval = 0.0 + step;
+            let maxval = 2.0 - step;
+
+            ui.horizontal(|ui| {
+                ui.label("R");
+                if ui.button("-").clicked() {
+                    if self.r >= minval {
+                        self.r -= step;
+                    }
+                }
+                ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0));
+                if ui.button("+").clicked() {
+                    if self.r <= maxval {
+                        self.r += step;
+                    }
+                }
+                ui.label(" ");
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("G");
+                if ui.button("-").clicked() {
+                    if self.g >= minval {
+                        self.g -= step;
+                    }
+                }            
+                ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0));
+                if ui.button("+").clicked() {
+                    if self.g <= maxval {
+                        self.g += step;
+                    }
+                }
+                ui.label(" ");
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("B");
+                if ui.button("-").clicked() {
+                    if self.b >= minval {
+                        self.b -= step;
+                    }
+                }
+                ui.add(egui::Slider::new(&mut self.b, 0.0..=2.0));
+                if ui.button("+").clicked() {
+                    if self.b <= maxval {
+                        self.b += step;
+                    }
+                }
+                ui.label(" ");
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("A");
+                if ui.button("-").clicked() {
+                    if self.a >= minval {
+                        self.a -= step;
+                    }
+                }
+                ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0));
+                if ui.button("+").clicked() {
+                    if self.a <= maxval {
+                        self.a += step;
+                    }
+                }
+            });
         });
     }
 

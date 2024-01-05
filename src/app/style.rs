@@ -1,5 +1,5 @@
 use egui::epaint::Shadow;
-use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin, Frame};
+use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin, Frame, Style};
 use egui::TextStyle::*;
 use egui::FontId;
 use egui::FontFamily::Proportional;
@@ -35,7 +35,7 @@ pub fn app_style(ctx: &Context) -> egui::Style {
     // Dark Mode
     if ctx.style().visuals.dark_mode {
         text_visuals = style::WidgetVisuals {
-            fg_stroke: Stroke::new(1.0, Color32::WHITE),
+            fg_stroke: Stroke::new(1.0, Color32::from_gray(200)),
             ..widget_visuals
         };
     }    
@@ -68,15 +68,15 @@ pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
     let mut style = app_style(ctx);
 
     // Redefine text_styles
-    style.text_styles = [
-        (Heading, FontId::new(30.0, Proportional)),
-        (Name("Heading2".into()), FontId::new(25.0, Proportional)),
-        (Name("Context".into()), FontId::new(23.0, Proportional)),
-        (Body, FontId::new(18.0, Proportional)),
-        (Monospace, FontId::new(14.0, Proportional)),
-        (Button, FontId::new(14.0, Proportional)),
-        (Small, FontId::new(10.0, Proportional)),
-    ].into();
+    // style.text_styles = [
+    //     (Heading, FontId::new(30.0, Proportional)),
+    //     (Name("Heading2".into()), FontId::new(25.0, Proportional)),
+    //     (Name("Context".into()), FontId::new(23.0, Proportional)),
+    //     (Body, FontId::new(18.0, Proportional)),
+    //     (Monospace, FontId::new(14.0, Proportional)),
+    //     (Button, FontId::new(14.0, Proportional)),
+    //     (Small, FontId::new(10.0, Proportional)),
+    // ].into();
   
 
     return style;
@@ -96,4 +96,14 @@ pub fn toppanel_frame(ctx: &Context) -> Frame {
     };
 
     return frame;
+}
+
+pub fn bigger_buttons(ctx: &Context) -> egui::Style {
+    let mut style = app_style(ctx);
+
+    style.spacing.button_padding = Vec2 { x: 6.0, y: 4.0};
+
+    style.visuals.widgets.inactive.weak_bg_fill = Color32::from_rgb(61, 52, 77);   
+
+    return style;
 }

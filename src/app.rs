@@ -257,10 +257,10 @@ impl eframe::App for ColorGradeApp {
             .min_height(80.0)
             .frame(style::toppanel_frame(ctx))
             .show(ctx, |ui: &mut egui::Ui| {
-                //ui.set_style(style::app_style(ctx));
-                ui.heading("Configuration");
 
-                ui.horizontal(|ui| {     
+                ui.horizontal(|ui| {   
+                    ui.set_style(style::bigger_buttons(ctx));
+
                     if ui.button("Save Config").clicked() {
                         self.show_config_viewport = true;
                     }
@@ -276,6 +276,8 @@ impl eframe::App for ColorGradeApp {
                         }
                     }    
                 });
+                ui.set_style(style::app_style(ctx));
+
                 ui.vertical(|ui| {
                     ui.label(format!("UE Project: {}", self.project_name));
                     ui.horizontal(|ui| {
@@ -300,10 +302,10 @@ impl eframe::App for ColorGradeApp {
             .resizable(true)
             .min_height(120.0)
             .frame(style::toppanel_frame(ctx))
-            .show(ctx, |ui| {
-                // ui.set_style(style::app_style(ctx));
-                
-                ui.heading("Configure Preset Buttons");
+            .show(ctx, |ui| {                
+                ui.set_style(style::configure_buttons_style(ctx));
+
+                ui.heading("Configure Preset Buttons");                
 
                 let mut clicked = false;
                 configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
@@ -318,9 +320,7 @@ impl eframe::App for ColorGradeApp {
             egui::CentralPanel::default()
             .show(ctx, |ui| {
                 let request = GetRequest::init(); 
-
-                ui.heading("Preset");
-                ui.set_style(style::app_style(ctx));
+                ui.set_style(style::bigger_buttons(ctx));
 
                 // Menu buttons
                 ui.horizontal(|ui| {
@@ -339,6 +339,8 @@ impl eframe::App for ColorGradeApp {
                         }
                     }
                 });
+
+                ui.set_style(style::app_style(ctx));
                 
                 self.color_grade.create_sliderbox(ui);
 

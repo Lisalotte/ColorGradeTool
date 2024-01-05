@@ -148,6 +148,8 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
                                         
                 }
 
+                ui.label(" ");
+
                 if col == col_max {
                     ui.end_row();
                     col = 1;
@@ -159,6 +161,28 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
                     break;
                 } else {
                     counter += 1;
+                }
+            }
+
+            // Fill unassigned buttons with placeholders
+            if counter <= 9 {
+                for i in counter..10 {                
+                    ui.horizontal(|ui| {
+                        ui.label("Unassigned")
+                    });
+    
+                    if ui.button( "Overwrite").clicked() {
+                        *button_clicked = counter;
+                        *clicked = true;
+                        *show_config_viewport = true;
+                    }
+                    
+                    ui.label(RichText::new(" Load ")
+                        .color(Color32::LIGHT_GRAY)
+                        .background_color(Color32::DARK_GRAY));
+
+                    ui.label(" ");
+
                 }
             }
         });
