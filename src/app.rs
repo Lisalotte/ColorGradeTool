@@ -183,18 +183,6 @@ impl eframe::App for ColorGradeApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {       
 
         let mut pending_update = false;
-
-        // Check connection
-        // if !self.connection_ok {
-        //     let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
-
-        //     match check_connection {
-        //         Ok(()) => self.connection_ok = true,
-        //         Err(e) => { 
-        //             println!("Error: {}", e);
-        //         },        
-        //     };
-        // };
        
         // For every slider box, check if any values have changed.
         // If so, update all values to UE
@@ -403,12 +391,6 @@ impl eframe::App for ColorGradeApp {
 
             ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
         });
-
-        // else { //No connection with UE: show error message
-        //     egui::CentralPanel::default().show(ctx, |ui| {
-        //         ui.label(format!("Trying to establish a connection with UE..."));
-        //     });
-        // }
 
         // New window for saving a preset
         if self.show_presetname_viewport {

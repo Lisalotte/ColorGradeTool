@@ -19,7 +19,7 @@ impl ColorValues {
             ui.label(name);
             //self.add_sliderbox(ui);
             
-            let step = 0.1;
+            let step = 0.05;
             let minval = 0.0 + step;
             let maxval = 2.0 - step;
 

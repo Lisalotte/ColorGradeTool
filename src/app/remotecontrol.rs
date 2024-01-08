@@ -108,5 +108,16 @@ pub fn update_everything(color_grade: &mut colorgrade::ColorGrade, path: String,
         .json(&request)
         .send()?;
 
-    Ok(())
+    match response.error_for_status() {
+        Ok(_res) => return Ok(()),
+        Err(err) => {
+            // asserting a 400 as an example
+            // it could be any status between 400...599
+            assert_eq!(
+                err.status(),
+                Some(reqwest::StatusCode::BAD_REQUEST)
+            );
+            return std::result::Result::Err(err);
+        }
+    }
 }
