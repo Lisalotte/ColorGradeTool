@@ -54,8 +54,9 @@ pub struct ColorGradeApp {
 }
 
 impl ColorGradeApp {
-    /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+
+    // Initialize with default values
+    fn new_colorgrade() -> (colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues) {
         let sat = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
         };
@@ -68,6 +69,14 @@ impl ColorGradeApp {
         let gain = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
         };
+
+        return (sat, con, gam, gain);
+    }
+
+    /// Called once before the first frame.
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+
+        let (sat, con, gam, gain) = Self::new_colorgrade();
 
         let fullscreen = colorgrade::ColorComponent::new(
             "fullscreen",
@@ -77,18 +86,7 @@ impl ColorGradeApp {
             gain
         );
 
-        let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
+        let (sat, con, gam, gain) = Self::new_colorgrade();
 
         let scene = colorgrade::ColorComponent::new(
             "scene",
@@ -98,18 +96,7 @@ impl ColorGradeApp {
             gain
         );
 
-        let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
-        let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
-        };
+        let (sat, con, gam, gain) = Self::new_colorgrade();
 
         let camera = colorgrade::ColorComponent::new(
             "camera",
@@ -169,7 +156,6 @@ impl eframe::App for ColorGradeApp {
 
     // Called each time the UI needs repainting
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {       
-        // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
 
         let mut pending_update = false;
 
