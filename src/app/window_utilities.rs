@@ -1,6 +1,7 @@
 use egui::Context;
 use crate::app::configmanager;
 use crate::app::presetmanager;
+use crate::app::remotecontrol;
 use super::ColorGradeApp;
 
 pub fn show_presetname_viewport(app: &mut ColorGradeApp, ctx: &Context) {
@@ -32,7 +33,7 @@ pub fn show_presetname_viewport(app: &mut ColorGradeApp, ctx: &Context) {
     );
 }
 
-pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context) {    
+pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context, pending: &mut bool) {    
     ctx.show_viewport_immediate(
         egui::ViewportId::from_hash_of("objectpath_viewport"),
         egui::ViewportBuilder::default()
@@ -48,6 +49,20 @@ pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                 ui.label("Object Path:");
                 ui.text_edit_singleline(&mut app.object_path);
                 if ui.button("Save").clicked() {
+                    
+                    // Reconnect
+                    let check_path = remotecontrol::check_object_path(app.object_path.clone(), app.ip_address.clone());
+                    match check_path {
+                        Ok(()) => { 
+                            app.path_ok = true;
+                            *pending = true;
+                        },
+                        Err(_e) => { 
+                            app.path_ok = false;
+                        },        
+                    };
+                    //
+
                     app.show_path_viewport = false;
                 }
             });
@@ -76,6 +91,29 @@ pub fn show_ip_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                 ui.label("IP Address:");
                 ui.text_edit_singleline(&mut app.ip_address);
                 if ui.button("Save").clicked() {
+                    let check_connection = remotecontrol::check_connection(app.object_path.clone(), app.ip_address.clone());
+
+                    match check_connection {
+                        Ok(()) => {
+                            println!("Connection ok");
+                            app.connection_ok = true;
+                        },
+                        Err(e) => { 
+                            println!("Error: {}", e);
+                            app.connection_ok = false;
+                        },        
+                    };
+
+                    if app.connection_ok { 
+                        let check_path = remotecontrol::check_object_path(app.object_path.clone(), app.ip_address.clone());
+                        match check_path {
+                            Ok(()) => app.path_ok = true,
+                            Err(e) => { 
+                                app.path_ok = false
+                            },        
+                        };
+                    }
+
                     app.show_ip_viewport = false;
                 }
             });

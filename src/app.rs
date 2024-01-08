@@ -12,7 +12,7 @@ use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
 
-use self::remotecontrol::{update_everything, check_connection};
+use self::remotecontrol::{update_everything, check_connection, check_object_path};
 
 pub struct ButtonConfig {
     project_name: String,
@@ -47,6 +47,7 @@ pub struct ColorGradeApp {
     object_path: String,
     ip_address: String,
     connection_ok: bool,
+    path_ok: bool,
     button_nr: i32,
     config_name: String,
 
@@ -120,6 +121,29 @@ impl ColorGradeApp {
         // Read default config file
         configmanager::load_config(String::from("config/default.json"), &mut preset_name_init, &mut object_path_init, &mut ip_address_init, &mut project_name_init); 
 
+        // Check connection with UE
+        let check_connection = check_connection(object_path_init.clone(), ip_address_init.clone());
+        let mut connection_ok = false;
+
+        match check_connection {
+            Ok(()) => connection_ok = true,
+            Err(e) => { 
+                println!("Error: {}", e);
+            },        
+        };
+
+        // Check path to object in UE
+        let mut path_ok = false;
+        if connection_ok { 
+            let check_path = check_object_path(object_path_init.clone(), ip_address_init.clone());
+            match check_path {
+                Ok(()) => path_ok = true,
+                Err(e) => { 
+                    println!("Error: {}", e);
+                },        
+            };
+        }
+
         // Instantiate the color_grade struct
         Self {
             color_grade: color_grade_obj,
@@ -133,7 +157,8 @@ impl ColorGradeApp {
             preset_name: preset_name_init,
             object_path: object_path_init,
             ip_address: ip_address_init,
-            connection_ok: false,
+            connection_ok: connection_ok,
+            path_ok: path_ok,
             button_nr: 0,
             config_name: String::from("name"),
 
@@ -160,16 +185,16 @@ impl eframe::App for ColorGradeApp {
         let mut pending_update = false;
 
         // Check connection
-        if !self.connection_ok {
-            let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
+        // if !self.connection_ok {
+        //     let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
 
-            match check_connection {
-                Ok(()) => self.connection_ok = true,
-                Err(e) => { 
-                    println!("Error: {}", e);
-                },        
-            };
-        };
+        //     match check_connection {
+        //         Ok(()) => self.connection_ok = true,
+        //         Err(e) => { 
+        //             println!("Error: {}", e);
+        //         },        
+        //     };
+        // };
        
         // For every slider box, check if any values have changed.
         // If so, update all values to UE
@@ -219,140 +244,171 @@ impl eframe::App for ColorGradeApp {
                 }
             }
         }
-        
-        // Send all values to UE, if a slider value has changed
-        if pending_update && self.connection_ok {
-            let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone());
-            
-            match update_everything {
-                Ok(()) => {
-                    self.connection_ok = true;
-                },
-                Err(e) => {
-                    self.connection_ok = false;
-                    println!("Error: {}", e);
+
+        //--- Top panel ---
+        egui::TopBottomPanel::top("top_panel")
+        .resizable(true)
+        .min_height(80.0)
+        .frame(style::panel_frame(ctx))
+        .show(ctx, |ui: &mut egui::Ui| {
+
+            ui.horizontal(|ui| {   
+                ui.set_style(style::bigger_buttons(ctx));
+
+                if ui.button("Save Config").clicked() {
+                    self.show_config_viewport = true;
                 }
-            }
-        }
-
-        if self.connection_ok {
-
-            //--- Top panel ---
-            egui::TopBottomPanel::top("top_panel")
-            .resizable(true)
-            .min_height(80.0)
-            .frame(style::panel_frame(ctx))
-            .show(ctx, |ui: &mut egui::Ui| {
-
-                ui.horizontal(|ui| {   
-                    ui.set_style(style::bigger_buttons(ctx));
-
-                    if ui.button("Save Config").clicked() {
-                        self.show_config_viewport = true;
+                if ui.button("Load Config").clicked() {
+                    // Open file dialog
+                    if let Ok(current_dir) = std::env::current_dir() {
+                        if let Some(path) = rfd::FileDialog::new()
+                        .set_directory(current_dir)
+                        .pick_file() {
+                            configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
+                            presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
+                        }
                     }
-                    if ui.button("Load Config").clicked() {
+                }    
+            });
+            ui.set_style(style::app_style(ctx));
+
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    if ui.button("Select UE Project").clicked() {
                         // Open file dialog
                         if let Ok(current_dir) = std::env::current_dir() {
                             if let Some(path) = rfd::FileDialog::new()
                             .set_directory(current_dir)
                             .pick_file() {
-                                configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
-                                presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
-                            }
-                        }
-                    }    
-                });
-                ui.set_style(style::app_style(ctx));
-
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        if ui.button("Select UE Project").clicked() {
-                            // Open file dialog
-                            if let Ok(current_dir) = std::env::current_dir() {
-                                if let Some(path) = rfd::FileDialog::new()
-                                .set_directory(current_dir)
-                                .pick_file() {
-                                    if path.extension() == Some(OsStr::new("uproject")) {
-                                        self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
-                                    }
+                                if path.extension() == Some(OsStr::new("uproject")) {
+                                    self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
                                 }
                             }
                         }
-                        ui.label(format!("UE Project: {}", self.project_name));
-                    });
-                    ui.horizontal(|ui| {
-                        if ui.button("Set Target IP").clicked() {
-                            self.show_ip_viewport = true;
-                        }
-                        ui.label(format!("IP: {}", self.ip_address));
-                    });
-                    ui.horizontal(|ui| {
-                        if ui.button("Set Object Path").clicked() {
-                            self.show_path_viewport = true;
-                        }
-                        ui.label(format!("Path: {}", self.object_path));
-                    });  
-                });
-                
-                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
-            });
-
-            //--- Bottom panel ---
-            egui::TopBottomPanel::bottom("bottom_panel")
-            .resizable(true)
-            .min_height(120.0)
-            .frame(style::panel_frame(ctx))
-            .show(ctx, |ui| {                
-                ui.set_style(style::configure_buttons_style(ctx));
-
-                ui.heading("Configure Preset Buttons");                
-
-                let mut clicked = false;
-                configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
-                if clicked {
-                    self.init_button_config();
-                }
-
-                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
-            });
-
-            //--- Main panel ---
-            egui::CentralPanel::default()
-            .frame(style::panel_frame(ctx))
-            .show(ctx, |ui| {
-                let request = GetRequest::init(); 
-                ui.set_style(style::bigger_buttons(ctx));
-
-                // Menu buttons
-                ui.horizontal(|ui| {
-                    if ui.button("Save Preset").clicked() {
-                        self.show_presetname_viewport = true;
                     }
-                    if ui.button("Load Preset").clicked() { 
-                        // Open file dialog
-                        if let Ok(current_dir) = std::env::current_dir() {
-                            if let Some(path) = rfd::FileDialog::new()
-                            .set_directory(current_dir)
-                            .pick_file() {
-                                println!("Path: {}", path.display().to_string());
-                                presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                    ui.label(format!("UE Project: {}", self.project_name));
+                });
+                ui.horizontal(|ui| {
+                    if ui.button("Set Target IP").clicked() {
+                        self.show_ip_viewport = true;
+                    }
+                    if !self.connection_ok {
+                        let ip_warning = RichText::new(format!("IP: {} (connection failed)", self.ip_address))
+                            .color(Color32::RED);
+                        ui.label(ip_warning);
+
+                        // Reconnect
+                        if ui.button("Reconnect").clicked() { // Try to reconnect to UE
+                            let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
+
+                            match check_connection {
+                                Ok(()) => self.connection_ok = true,
+                                Err(e) => { 
+                                    println!("Error: {}", e);
+                                },        
+                            };
+
+                            if self.connection_ok { 
+                                let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
+                                match check_path {
+                                    Ok(()) => self.path_ok = true,
+                                    Err(e) => { 
+                                        self.path_ok = false
+                                    },        
+                                };
                             }
                         }
+                        //
+                    } else {
+                        ui.label(format!("IP: {}", self.ip_address));
                     }
                 });
-
-                ui.set_style(style::app_style(ctx));
-                
-                self.color_grade.create_sliderbox(ui);
-
-                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+                ui.horizontal(|ui| {
+                    if ui.button("Set Object Path").clicked() {
+                        self.show_path_viewport = true;
+                    }
+                    if self.path_ok {
+                        ui.label(format!("Path: {}", self.object_path));
+                    }
+                    else { 
+                        // Reconnect
+                        ui.label(RichText::new(format!("Path: {}", self.object_path)).color(Color32::RED));
+                        if ui.button("Reconnect").clicked() {
+                            let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
+                            match check_path {
+                                Ok(()) => { 
+                                    self.path_ok = true;
+                                    pending_update = true;
+                                },
+                                Err(_e) => { 
+                                    self.path_ok = false;
+                                },        
+                            };
+                        }
+                        //
+                    }
+                });  
             });
-        }
-        else { //No connection with UE: show error message
-            egui::CentralPanel::default().show(ctx, |ui| {
-                ui.label(format!("Trying to establish a connection with UE..."));
+            
+            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+        });
+
+        //--- Bottom panel ---
+        egui::TopBottomPanel::bottom("bottom_panel")
+        .resizable(true)
+        .min_height(120.0)
+        .frame(style::panel_frame(ctx))
+        .show(ctx, |ui| {                
+            ui.set_style(style::configure_buttons_style(ctx));
+
+            ui.heading("Configure Preset Buttons");                
+
+            let mut clicked = false;
+            configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
+            if clicked {
+                self.init_button_config();
+            }
+
+            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+        });
+
+        //--- Main panel ---
+        egui::CentralPanel::default()
+        .frame(style::panel_frame(ctx))
+        .show(ctx, |ui| {
+            let request = GetRequest::init(); 
+            ui.set_style(style::bigger_buttons(ctx));
+
+            // Menu buttons
+            ui.horizontal(|ui| {
+                if ui.button("Save Preset").clicked() {
+                    self.show_presetname_viewport = true;
+                }
+                if ui.button("Load Preset").clicked() { 
+                    // Open file dialog
+                    if let Ok(current_dir) = std::env::current_dir() {
+                        if let Some(path) = rfd::FileDialog::new()
+                        .set_directory(current_dir)
+                        .pick_file() {
+                            println!("Path: {}", path.display().to_string());
+                            presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                        }
+                    }
+                }
             });
-        }
+
+            ui.set_style(style::app_style(ctx));
+            
+            self.color_grade.create_sliderbox(ui);
+
+            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+        });
+
+        // else { //No connection with UE: show error message
+        //     egui::CentralPanel::default().show(ctx, |ui| {
+        //         ui.label(format!("Trying to establish a connection with UE..."));
+        //     });
+        // }
 
         // New window for saving a preset
         if self.show_presetname_viewport {
@@ -361,7 +417,7 @@ impl eframe::App for ColorGradeApp {
         
         // New window for setting the object path
         if self.show_path_viewport {
-            window_utilities::show_path_viewport(self, ctx);
+            window_utilities::show_path_viewport(self, ctx, &mut pending_update);
         }
 
         // New window for setting the ip address
@@ -381,6 +437,21 @@ impl eframe::App for ColorGradeApp {
 
         if self.show_popup {
             window_utilities::show_popup(self, ctx, self.button_config.button_nr);
+        }
+
+        // Send all values to UE, if a slider value has changed
+        if pending_update && self.connection_ok && self.path_ok {
+            let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone());
+            
+            match update_everything {
+                Ok(()) => {
+                    self.connection_ok = true;
+                },
+                Err(e) => {
+                    self.connection_ok = false;
+                    println!("Error: {}", e);
+                }
+            }
         }
     }
 }
