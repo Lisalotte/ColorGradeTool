@@ -3,6 +3,7 @@ mod presetmanager;
 mod configmanager;
 mod window_utilities;
 mod style;
+mod simple_mode;
 
 use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}, ffi::OsStr};
 
@@ -50,6 +51,8 @@ pub struct ColorGradeApp {
     path_ok: bool,
     button_nr: i32,
     config_name: String,
+
+    simple_mode: bool,
 
     button_config: ButtonConfig,
 }
@@ -162,6 +165,8 @@ impl ColorGradeApp {
             button_nr: 0,
             config_name: String::from("name"),
 
+            simple_mode: false,
+
             button_config: ButtonConfig::new(String::from("default"), String::from("preset"), String::from("0.0.0.0"), String::from(""), 0),
         }
     }
@@ -233,164 +238,195 @@ impl eframe::App for ColorGradeApp {
             }
         }
 
-        //--- Top panel ---
-        egui::TopBottomPanel::top("top_panel")
-        .resizable(true)
-        .min_height(80.0)
-        .frame(style::panel_frame(ctx))
-        .show(ctx, |ui: &mut egui::Ui| {
+        if !self.simple_mode {
+            //--- Top panel ---
+            egui::TopBottomPanel::top("top_panel")
+            .resizable(true)
+            .min_height(80.0)
+            .frame(style::panel_frame(ctx))
+            .show(ctx, |ui: &mut egui::Ui| {
 
-            ui.horizontal(|ui| {   
-                ui.set_style(style::bigger_buttons(ctx));
+                ui.horizontal(|ui| {   
+                    ui.set_style(style::bigger_buttons(ctx));
 
-                if ui.button("Save Config").clicked() {
-                    self.show_config_viewport = true;
-                }
-                if ui.button("Load Config").clicked() {
-                    // Open file dialog
-                    if let Ok(current_dir) = std::env::current_dir() {
-                        if let Some(path) = rfd::FileDialog::new()
-                        .set_directory(current_dir)
-                        .pick_file() {
-                            configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
-                            presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
-                        }
+                    if ui.button("Save Config").clicked() {
+                        self.show_config_viewport = true;
                     }
-                }    
-            });
-            ui.set_style(style::app_style(ctx));
-
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    if ui.button("Select UE Project").clicked() {
+                    if ui.button("Load Config").clicked() {
                         // Open file dialog
                         if let Ok(current_dir) = std::env::current_dir() {
                             if let Some(path) = rfd::FileDialog::new()
                             .set_directory(current_dir)
                             .pick_file() {
-                                if path.extension() == Some(OsStr::new("uproject")) {
-                                    self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
+                                configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
+                                presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
+                            }
+                        }
+                    }    
+                    
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                        if ui.button("Switch to simple mode").clicked() {
+                            self.simple_mode = true;
+                        }
+                    });
+
+                });
+                ui.set_style(style::app_style(ctx));
+
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Select UE Project").clicked() {
+                            // Open file dialog
+                            if let Ok(current_dir) = std::env::current_dir() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                .set_directory(current_dir)
+                                .pick_file() {
+                                    if path.extension() == Some(OsStr::new("uproject")) {
+                                        self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
+                                    }
                                 }
                             }
                         }
-                    }
-                    ui.label(format!("UE Project: {}", self.project_name));
-                });
-                ui.horizontal(|ui| {
-                    if ui.button("Set Target IP").clicked() {
-                        self.show_ip_viewport = true;
-                    }
-                    if !self.connection_ok {
-                        let ip_warning = RichText::new(format!("IP: {} (connection failed)", self.ip_address))
-                            .color(Color32::RED);
-                        ui.label(ip_warning);
+                        ui.label(format!("UE Project: {}", self.project_name));
+                    });
+                    ui.horizontal(|ui| {
+                        if ui.button("Set Target IP").clicked() {
+                            self.show_ip_viewport = true;
+                        }
+                        if !self.connection_ok {
+                            let ip_warning = RichText::new(format!("IP: {} (connection failed)", self.ip_address))
+                                .color(Color32::RED);
+                            ui.label(ip_warning);
 
-                        // Reconnect
-                        if ui.button("Reconnect").clicked() { // Try to reconnect to UE
-                            let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
+                            // Reconnect
+                            if ui.button("Reconnect").clicked() { // Try to reconnect to UE
+                                let check_connection = check_connection(self.object_path.clone(), self.ip_address.clone());
 
-                            match check_connection {
-                                Ok(()) => self.connection_ok = true,
-                                Err(e) => { 
-                                    println!("Error: {}", e);
-                                },        
-                            };
+                                match check_connection {
+                                    Ok(()) => self.connection_ok = true,
+                                    Err(e) => { 
+                                        println!("Error: {}", e);
+                                    },        
+                                };
 
-                            if self.connection_ok { 
+                                if self.connection_ok { 
+                                    let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
+                                    match check_path {
+                                        Ok(()) => self.path_ok = true,
+                                        Err(e) => { 
+                                            self.path_ok = false
+                                        },        
+                                    };
+                                }
+                            }
+                            //
+                        } else {
+                            ui.label(format!("IP: {}", self.ip_address));
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        if ui.button("Set Object Path").clicked() {
+                            self.show_path_viewport = true;
+                        }
+                        if self.path_ok {
+                            ui.label(format!("Path: {}", self.object_path));
+                        }
+                        else { 
+                            // Reconnect
+                            ui.label(RichText::new(format!("Path: {}", self.object_path)).color(Color32::RED));
+                            if ui.button("Reconnect").clicked() {
                                 let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
                                 match check_path {
-                                    Ok(()) => self.path_ok = true,
-                                    Err(e) => { 
-                                        self.path_ok = false
+                                    Ok(()) => { 
+                                        self.path_ok = true;
+                                        pending_update = true;
+                                    },
+                                    Err(_e) => { 
+                                        self.path_ok = false;
                                     },        
                                 };
                             }
+                            //
                         }
-                        //
-                    } else {
-                        ui.label(format!("IP: {}", self.ip_address));
+                    });  
+                });
+                
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+            });
+
+            //--- Bottom panel ---
+            egui::TopBottomPanel::bottom("bottom_panel")
+            .resizable(true)
+            .min_height(120.0)
+            .frame(style::panel_frame(ctx))
+            .show(ctx, |ui| {                
+                ui.set_style(style::configure_buttons_style(ctx));
+
+                ui.heading("Configure Preset Buttons");                
+
+                let mut clicked = false;
+                configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
+                if clicked {
+                    self.init_button_config();
+                }
+
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+            });
+
+            //--- Main panel ---
+            egui::CentralPanel::default()
+            .frame(style::panel_frame(ctx))
+            .show(ctx, |ui| {
+                let request = GetRequest::init(); 
+                ui.set_style(style::bigger_buttons(ctx));
+
+                // Menu buttons
+                ui.horizontal(|ui| {
+                    if ui.button("Save Preset").clicked() {
+                        self.show_presetname_viewport = true;
+                    }
+                    if ui.button("Load Preset").clicked() { 
+                        // Open file dialog
+                        if let Ok(current_dir) = std::env::current_dir() {
+                            if let Some(path) = rfd::FileDialog::new()
+                            .set_directory(current_dir)
+                            .pick_file() {
+                                println!("Path: {}", path.display().to_string());
+                                presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                            }
+                        }
                     }
                 });
+
+                ui.set_style(style::app_style(ctx));
+                
+                self.color_grade.create_sliderbox(ui);
+
+                ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
+            });
+        }
+        else { // Simple mode
+            egui::CentralPanel::default()
+            .frame(style::panel_frame(ctx))
+            .show(ctx, |ui| {
+                ui.set_style(style::bigger_buttons(ctx));
+
                 ui.horizontal(|ui| {
-                    if ui.button("Set Object Path").clicked() {
-                        self.show_path_viewport = true;
-                    }
-                    if self.path_ok {
-                        ui.label(format!("Path: {}", self.object_path));
-                    }
-                    else { 
-                        // Reconnect
-                        ui.label(RichText::new(format!("Path: {}", self.object_path)).color(Color32::RED));
-                        if ui.button("Reconnect").clicked() {
-                            let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
-                            match check_path {
-                                Ok(()) => { 
-                                    self.path_ok = true;
-                                    pending_update = true;
-                                },
-                                Err(_e) => { 
-                                    self.path_ok = false;
-                                },        
-                            };
+                    ui.label("Simple mode");
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                        if ui.button("Configuration mode").clicked() {
+                            self.simple_mode = false;
                         }
-                        //
-                    }
-                });  
+                    });
+
+                    let mut clicked = false;
+                    let mut button_clicked = 0;
+
+                    simple_mode::buttons(ui, ctx, &mut clicked, &mut button_clicked);
             });
-            
-            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
-        });
-
-        //--- Bottom panel ---
-        egui::TopBottomPanel::bottom("bottom_panel")
-        .resizable(true)
-        .min_height(120.0)
-        .frame(style::panel_frame(ctx))
-        .show(ctx, |ui| {                
-            ui.set_style(style::configure_buttons_style(ctx));
-
-            ui.heading("Configure Preset Buttons");                
-
-            let mut clicked = false;
-            configmanager::configure_buttons(ui, ctx, &mut clicked, &mut self.show_config_button_viewport, &mut self.show_popup, &mut self.button_nr); 
-            if clicked {
-                self.init_button_config();
-            }
-
-            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
-        });
-
-        //--- Main panel ---
-        egui::CentralPanel::default()
-        .frame(style::panel_frame(ctx))
-        .show(ctx, |ui| {
-            let request = GetRequest::init(); 
-            ui.set_style(style::bigger_buttons(ctx));
-
-            // Menu buttons
-            ui.horizontal(|ui| {
-                if ui.button("Save Preset").clicked() {
-                    self.show_presetname_viewport = true;
-                }
-                if ui.button("Load Preset").clicked() { 
-                    // Open file dialog
-                    if let Ok(current_dir) = std::env::current_dir() {
-                        if let Some(path) = rfd::FileDialog::new()
-                        .set_directory(current_dir)
-                        .pick_file() {
-                            println!("Path: {}", path.display().to_string());
-                            presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
-                        }
-                    }
-                }
             });
-
-            ui.set_style(style::app_style(ctx));
-            
-            self.color_grade.create_sliderbox(ui);
-
-            ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
-        });
+        }
 
         // New window for saving a preset
         if self.show_presetname_viewport {
