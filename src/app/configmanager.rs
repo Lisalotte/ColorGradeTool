@@ -4,10 +4,13 @@ use egui_modal::DialogBuilder;
 use egui_modal::Modal;
 use serde_json::json;
 use serde_json::Value;
+use std::fs::DirEntry;
+use std::fs::ReadDir;
 use std::path::PathBuf;
+use super::ColorGradeApp;
 
-pub fn get_projectname(config_path: &PathBuf, project_name: &mut String) {
-    if config_path.exists() {        
+pub fn get_projectname(config_path: &PathBuf, project_name: &mut String) { 
+    if config_path.exists() {           
         let json_string = std::fs::read_to_string(config_path).expect("Failed to read file");
 
         let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
@@ -107,6 +110,13 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
     // For all files in the config folder
     if let Ok(current_dir) = std::env::current_dir() {
         let config_folder = "config/buttons";
+        
+        let config_folder_path = current_dir.join(config_folder);
+
+        if !config_folder_path.is_dir() {
+            // Create the folder if it doesn't exist
+            std::fs::create_dir_all(config_folder_path).unwrap();
+        }
 
         let paths = std::fs::read_dir(config_folder).unwrap();
 
