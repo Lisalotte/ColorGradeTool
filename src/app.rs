@@ -312,7 +312,10 @@ impl eframe::App for ColorGradeApp {
                                 if self.connection_ok { 
                                     let check_path = check_object_path(self.object_path.clone(), self.ip_address.clone());
                                     match check_path {
-                                        Ok(()) => self.path_ok = true,
+                                        Ok(()) => { 
+                                            self.path_ok = true;
+                                            pending_update = true;
+                                        },
                                         Err(e) => { 
                                             self.path_ok = false
                                         },        

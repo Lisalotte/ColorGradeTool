@@ -193,6 +193,8 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
 
                     ui.label(" ");
 
+                    //TODO: Should add ui.end_row() here!
+
                 }
             }
         });
