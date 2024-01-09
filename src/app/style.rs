@@ -1,8 +1,5 @@
 use egui::epaint::Shadow;
-use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin, Frame, Style};
-use egui::TextStyle::*;
-use egui::FontId;
-use egui::FontFamily::Proportional;
+use egui::{style, Vec2, Color32, Stroke, Rounding, Context, Margin, Frame};
 
 pub fn app_style(ctx: &Context) -> egui::Style {
     let m = 20.0;
@@ -49,7 +46,7 @@ pub fn app_style(ctx: &Context) -> egui::Style {
         ..Default::default()
     };
 
-    let mut visuals = style::Visuals {
+    let visuals = style::Visuals {
         widgets: widgets,
         ..Default::default()
     };
@@ -65,7 +62,7 @@ pub fn app_style(ctx: &Context) -> egui::Style {
 
 pub fn configure_buttons_style(ctx: &Context) -> egui::Style {
 
-    let mut style = app_style(ctx);
+    let style = app_style(ctx);
 
     // Redefine text_styles
     // style.text_styles = [

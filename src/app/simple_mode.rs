@@ -1,10 +1,10 @@
 use crate::app::configmanager;
 use egui::Context;
 
-pub fn buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, button_clicked: &mut i32) {
+pub fn buttons(ui: &mut egui::Ui, _ctx: &Context, _clicked: &mut bool, _button_clicked: &mut i32) {
 
     // For all files in the config folder
-    if let Ok(current_dir) = std::env::current_dir() {
+    if let Ok(_current_dir) = std::env::current_dir() {
         let config_folder = "config/buttons";
 
         let paths = std::fs::read_dir(config_folder).unwrap();

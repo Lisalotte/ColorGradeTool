@@ -1,5 +1,4 @@
 use reqwest;
-use reqwest::Response;
 use serde_json::json;
 use serde_json::Value;
 
@@ -35,7 +34,7 @@ impl GetRequest {
     }
 }
 
-pub fn check_connection(path: String, ip: String) -> Result<(), reqwest::Error> {
+pub fn check_connection(_path: String, ip: String) -> Result<(), reqwest::Error> {
 
     let url = ip.to_owned() + "remote/object/call";
 

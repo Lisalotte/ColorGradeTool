@@ -5,15 +5,14 @@ mod window_utilities;
 mod style;
 mod simple_mode;
 
-use std::{thread, time, sync::{atomic::{AtomicBool, Ordering}, Arc}, ffi::OsStr};
+use std::ffi::OsStr;
 
-use egui::{Pos2, TextStyle, CollapsingHeader, RichText, Color32};
-use egui_modal::{Modal, DialogBuilder};
+use egui::{RichText, Color32};
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
 
-use self::remotecontrol::{update_everything, check_connection, check_object_path};
+use self::remotecontrol::{check_connection, check_object_path};
 
 pub struct ButtonConfig {
     project_name: String,
@@ -316,7 +315,7 @@ impl eframe::App for ColorGradeApp {
                                             self.path_ok = true;
                                             pending_update = true;
                                         },
-                                        Err(e) => { 
+                                        Err(_e) => { 
                                             self.path_ok = false
                                         },        
                                     };
@@ -380,7 +379,7 @@ impl eframe::App for ColorGradeApp {
             egui::CentralPanel::default()
             .frame(style::panel_frame(ctx))
             .show(ctx, |ui| {
-                let request = GetRequest::init(); 
+                let _request = GetRequest::init(); 
                 ui.set_style(style::bigger_buttons(ctx));
 
                 // Menu buttons

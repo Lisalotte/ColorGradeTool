@@ -1,13 +1,7 @@
 use egui::{RichText, Color32, Context};
-use egui_extras::{Column, TableBuilder};
-use egui_modal::DialogBuilder;
-use egui_modal::Modal;
 use serde_json::json;
 use serde_json::Value;
-use std::fs::DirEntry;
-use std::fs::ReadDir;
 use std::path::PathBuf;
-use super::ColorGradeApp;
 
 pub fn get_projectname(config_path: &PathBuf, project_name: &mut String) { 
     if config_path.exists() {           
@@ -40,7 +34,7 @@ pub fn get_presetname(config_path: &PathBuf) -> String {
 
 pub fn save_config(config_folder: &str, config_file: &str, object_path: &str, preset_name: &str, ip_address: &str, project_name: &str) {
     
-    let mut json_object = json!({
+    let json_object = json!({
         "project_name" : project_name,
         "preset" : preset_name,
         "path" : object_path,
@@ -105,7 +99,7 @@ pub fn load_config(path: String, preset_name: &mut String, object_path: &mut Str
     }
 }
 
-pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, show_config_viewport: &mut bool, show_popup: &mut bool, button_clicked: &mut i32) {
+pub fn configure_buttons(ui: &mut egui::Ui, _ctx: &Context, clicked: &mut bool, show_config_viewport: &mut bool, show_popup: &mut bool, button_clicked: &mut i32) {
 
     // For all files in the config folder
     if let Ok(current_dir) = std::env::current_dir() {
@@ -179,7 +173,7 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
             let mut col = 1;
 
             if counter <= 9 {
-                for i in counter..10 {                
+                for _i in counter..10 {                
                     ui.horizontal(|ui| {
                         ui.label("Unassigned")
                     });

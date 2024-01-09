@@ -108,7 +108,7 @@ pub fn show_ip_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                         let check_path = remotecontrol::check_object_path(app.object_path.clone(), app.ip_address.clone());
                         match check_path {
                             Ok(()) => app.path_ok = true,
-                            Err(e) => { 
+                            Err(_e) => { 
                                 app.path_ok = false
                             },        
                         };
