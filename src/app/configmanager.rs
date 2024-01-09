@@ -175,6 +175,9 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
             }
 
             // Fill unassigned buttons with placeholders
+            let col_max = 2;
+            let mut col = 1;
+
             if counter <= 9 {
                 for i in counter..10 {                
                     ui.horizontal(|ui| {
@@ -194,6 +197,12 @@ pub fn configure_buttons(ui: &mut egui::Ui, ctx: &Context, clicked: &mut bool, s
                     ui.label(" ");
 
                     //TODO: Should add ui.end_row() here!
+                    if col == col_max {
+                        ui.end_row();
+                        col = 1;
+                    } else {
+                        col += 1;
+                    }
 
                 }
             }
