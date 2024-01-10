@@ -109,3 +109,15 @@ pub fn bigger_buttons(ctx: &Context) -> egui::Style {
 
     return style;
 }
+
+pub fn simplemode_buttons(ctx: &Context) -> egui::Style {
+    let mut style = app_style(ctx);
+
+    style.spacing.button_padding = Vec2 { x: 10.0, y: 6.0};
+
+    style.visuals.widgets.inactive.weak_bg_fill = Color32::from_rgb(61, 52, 77);   
+
+    style.text_styles.get_mut(&egui::TextStyle::Button).unwrap().size = 24.0;
+
+    return style;
+}

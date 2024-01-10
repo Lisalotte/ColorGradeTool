@@ -414,19 +414,18 @@ impl eframe::App for ColorGradeApp {
                 ui.set_style(style::bigger_buttons(ctx));
 
                 ui.horizontal(|ui| {
-                    ui.label("Simple mode");
-
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                         if ui.button("Configuration mode").clicked() {
                             self.simple_mode = false;
                         }
                     });
+                });
 
-                    let mut clicked = false;
-                    let mut button_clicked = 0;
+                let mut clicked = false;
+                let mut button_clicked = 0;
 
-                    simple_mode::buttons(ui, ctx, &mut clicked, &mut button_clicked);
-            });
+                ui.set_style(style::simplemode_buttons(ctx));
+                simple_mode::buttons(self, ui, ctx, &mut clicked, &mut button_clicked);
             });
         }
 
