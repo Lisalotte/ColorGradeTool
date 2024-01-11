@@ -33,7 +33,7 @@ pub fn show_presetname_viewport(app: &mut ColorGradeApp, ctx: &Context) {
     );
 }
 
-pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context, pending: &mut bool) {    
+pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context) {    
     ctx.show_viewport_immediate(
         egui::ViewportId::from_hash_of("objectpath_viewport"),
         egui::ViewportBuilder::default()
@@ -55,7 +55,7 @@ pub fn show_path_viewport(app: &mut ColorGradeApp, ctx: &Context, pending: &mut 
                     match check_path {
                         Ok(()) => { 
                             app.path_ok = true;
-                            *pending = true;
+                            app.pending_update = true;
                         },
                         Err(_e) => { 
                             app.path_ok = false;
@@ -229,6 +229,8 @@ pub fn show_popup(app: &mut ColorGradeApp, ctx: &Context, button_nr: i32) {
                     configmanager::load_config(format!("config/buttons/button{}.json", button_nr), &mut app.preset_name, &mut app.object_path, &mut app.ip_address, &mut app.project_name);
                     presetmanager::load_preset(&mut app.color_grade, format!("presets/{}.json", app.preset_name));
                     app.show_popup = false;
+                    app.preset_edited = false;
+                    app.loading = true;
                 }
                 if ui.button("No").clicked() {
                     //configmanager::save_config("config/saved", &format!("{}.json", app.config_name), &app.object_path, &app.preset_name, &app.ip_address, &app.project_name);

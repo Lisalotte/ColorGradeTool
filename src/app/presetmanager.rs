@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+use std::str::FromStr;
+
 use serde_json::json;
 use serde_json::Value;
 
@@ -90,30 +93,37 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
 
 pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
     
-    let json_string = std::fs::read_to_string(path).expect("Failed to read file");
+    let pathbuf = PathBuf::from_str(path.as_str()).unwrap();
 
-    let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
+    if pathbuf.exists() {
+        let json_string = std::fs::read_to_string(path).expect("Failed to read file");
 
-    for component in color_grade.components.iter_mut() {
-        if component.name == "fullscreen" {
-            from_json(&mut component.saturation, &json_object["fullscreen"]["saturation"]);
-            from_json(&mut component.contrast, &json_object["fullscreen"]["contrast"]);
-            from_json(&mut component.gamma, &json_object["fullscreen"]["gamma"]);
-            from_json(&mut component.gain, &json_object["fullscreen"]["gain"]);
+        let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
+    
+        for component in color_grade.components.iter_mut() {
+            if component.name == "fullscreen" {
+                from_json(&mut component.saturation, &json_object["fullscreen"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["fullscreen"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["fullscreen"]["gamma"]);
+                from_json(&mut component.gain, &json_object["fullscreen"]["gain"]);
+            }
+            else if component.name == "scene" {
+                from_json(&mut component.saturation, &json_object["scene"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["scene"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["scene"]["gamma"]);
+                from_json(&mut component.gain, &json_object["scene"]["gain"]);            
+            }
+            else if component.name == "camera" {
+                from_json(&mut component.saturation, &json_object["camera"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["camera"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["camera"]["gamma"]);
+                from_json(&mut component.gain, &json_object["camera"]["gain"]);            
+            } else {
+                println!("Error loading JSON. No matching name found.");
+            }
         }
-        else if component.name == "scene" {
-            from_json(&mut component.saturation, &json_object["scene"]["saturation"]);
-            from_json(&mut component.contrast, &json_object["scene"]["contrast"]);
-            from_json(&mut component.gamma, &json_object["scene"]["gamma"]);
-            from_json(&mut component.gain, &json_object["scene"]["gain"]);            
-        }
-        else if component.name == "camera" {
-            from_json(&mut component.saturation, &json_object["camera"]["saturation"]);
-            from_json(&mut component.contrast, &json_object["camera"]["contrast"]);
-            from_json(&mut component.gamma, &json_object["camera"]["gamma"]);
-            from_json(&mut component.gain, &json_object["camera"]["gain"]);            
-        } else {
-            println!("Error loading JSON. No matching name found.");
-        }
+    } else {
+        println!("Couldn't find preset file."); // TODO show error message
     }
+
 }

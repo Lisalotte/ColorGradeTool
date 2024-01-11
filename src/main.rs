@@ -7,7 +7,7 @@ fn main() {
     
     // Settings for the egui viewport
 
-    let windowsize = Vec2::new(840.0, 780.0);
+    let windowsize = Vec2::new(880.0, 780.0);
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_min_inner_size(windowsize),

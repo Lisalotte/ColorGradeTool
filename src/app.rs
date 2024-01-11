@@ -5,9 +5,9 @@ mod window_utilities;
 mod style;
 mod simple_mode;
 
-use std::ffi::OsStr;
+use std::{ffi::OsStr, path::PathBuf};
 
-use egui::{RichText, Color32};
+use egui::{RichText, Color32, Ui};
 use remotecontrol::GetRequest;
 use crate::colorgrade::{self};
 use rfd;
@@ -51,7 +51,10 @@ pub struct ColorGradeApp {
     button_nr: i32,
     config_name: String,
 
+    pending_update: bool,
     simple_mode: bool,
+    preset_edited: bool,
+    loading: bool,
 
     button_config: ButtonConfig,
 }
@@ -61,16 +64,16 @@ impl ColorGradeApp {
     // Initialize with default values
     fn new_colorgrade() -> (colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues) {
         let sat = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
         let con = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
         let gam = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
         let gain = colorgrade::ColorValues{
-            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: Option::None, g_old: Option::None, b_old: Option::None, a_old: Option::None
+            r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
 
         return (sat, con, gam, gain);
@@ -164,7 +167,10 @@ impl ColorGradeApp {
             button_nr: 0,
             config_name: String::from("name"),
 
-            simple_mode: false,
+            pending_update: true,
+            simple_mode: true,
+            preset_edited: false,
+            loading: true,
 
             button_config: ButtonConfig::new(String::from("default"), String::from("preset"), String::from("0.0.0.0"), String::from(""), 0),
         }
@@ -179,14 +185,18 @@ impl ColorGradeApp {
             button_nr: self.button_nr.clone(),
         };  
     }
+
+    pub fn update_presetname_from_path(&mut self, path: PathBuf) {
+        if path.exists() {
+            self.preset_name = String::from(path.file_stem().unwrap().to_str().unwrap());
+        }
+    }
 }
 
 impl eframe::App for ColorGradeApp {
 
     // Called each time the UI needs repainting
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {       
-
-        let mut pending_update = false;
        
         // For every slider box, check if any values have changed.
         // If so, update all values to UE
@@ -195,44 +205,25 @@ impl eframe::App for ColorGradeApp {
             let iter_array = [&mut component.saturation, &mut component.contrast, &mut component.gamma, &mut component.gain];
 
             for color_value in iter_array {
-                if let Some(r_old) = color_value.r_old {
-                    if color_value.r != r_old {
-                        // Update everything
-                        color_value.r_old = Some(color_value.r);
-                        pending_update = true;
-                    }
-                } else {
-                    color_value.r_old = Some(0.0);
+                if color_value.r != color_value.r_old {
+                    // Update everything
+                    color_value.r_old = color_value.r;
+                    self.pending_update = true;
                 }
-
-                if let Some(g_old) = color_value.g_old {
-                    if color_value.g != g_old {
-                        // Update everything
-                        color_value.g_old = Some(color_value.g);
-                        pending_update = true;
-                    }
-                } else {
-                    color_value.g_old = Some(0.0);
+                if color_value.g != color_value.g_old {
+                    // Update everything
+                    color_value.g_old = color_value.g;
+                    self.pending_update = true;
                 }
-
-                if let Some(b_old) = color_value.b_old {
-                    if color_value.b != b_old {
-                        // Update everything
-                        color_value.b_old = Some(color_value.b);
-                        pending_update = true;
-                    }
-                } else {
-                    color_value.b_old = Some(0.0);
+                if color_value.b != color_value.b_old {
+                    // Update everything
+                    color_value.b_old = color_value.b;
+                    self.pending_update = true;
                 }
-
-                if let Some(a_old) = color_value.a_old {
-                    if color_value.a != a_old {
-                        // Update everything
-                        color_value.a_old = Some(color_value.a);
-                        pending_update = true;
-                    }
-                } else {
-                    color_value.a_old = Some(0.0);
+                if color_value.a != color_value.a_old {
+                    // Update everything
+                    color_value.a_old = color_value.a;
+                    self.pending_update = true;
                 }
             }
         }
@@ -259,6 +250,7 @@ impl eframe::App for ColorGradeApp {
                             .pick_file() {
                                 configmanager::load_config(path.display().to_string(), &mut self.preset_name, &mut self.object_path, &mut self.ip_address, &mut self.project_name);
                                 presetmanager::load_preset(&mut self.color_grade, format!("presets/{}.json", self.preset_name));
+                                self.loading = true;
                             }
                         }
                     }    
@@ -313,7 +305,7 @@ impl eframe::App for ColorGradeApp {
                                     match check_path {
                                         Ok(()) => { 
                                             self.path_ok = true;
-                                            pending_update = true;
+                                            self.pending_update = true;
                                         },
                                         Err(_e) => { 
                                             self.path_ok = false
@@ -341,7 +333,7 @@ impl eframe::App for ColorGradeApp {
                                 match check_path {
                                     Ok(()) => { 
                                         self.path_ok = true;
-                                        pending_update = true;
+                                        self.pending_update = true;
                                     },
                                     Err(_e) => { 
                                         self.path_ok = false;
@@ -393,10 +385,18 @@ impl eframe::App for ColorGradeApp {
                             if let Some(path) = rfd::FileDialog::new()
                             .set_directory(current_dir)
                             .pick_file() {
-                                println!("Path: {}", path.display().to_string());
                                 presetmanager::load_preset(&mut self.color_grade, path.display().to_string());
+                                self.update_presetname_from_path(path);
+                                self.preset_edited = false;
+                                self.loading = true;
                             }
                         }
+                    }
+                    Ui::add_space(ui, 10.0);
+                    if !self.preset_edited {
+                        ui.label(format!("Current preset: {}", self.preset_name));
+                    } else {
+                        ui.label(format!("Current preset: {} (edited)", self.preset_name));
                     }
                 });
 
@@ -426,6 +426,10 @@ impl eframe::App for ColorGradeApp {
 
                 ui.set_style(style::simplemode_buttons(ctx));
                 simple_mode::buttons(self, ui, ctx, &mut clicked, &mut button_clicked);
+                
+                if clicked {
+                    self.preset_edited = false;
+                }
             });
         }
 
@@ -436,7 +440,7 @@ impl eframe::App for ColorGradeApp {
         
         // New window for setting the object path
         if self.show_path_viewport {
-            window_utilities::show_path_viewport(self, ctx, &mut pending_update);
+            window_utilities::show_path_viewport(self, ctx);
         }
 
         // New window for setting the ip address
@@ -459,7 +463,15 @@ impl eframe::App for ColorGradeApp {
         }
 
         // Send all values to UE, if a slider value has changed
-        if pending_update && self.connection_ok && self.path_ok {
+        if self.pending_update && self.connection_ok && self.path_ok {
+            
+            // Check if loading a preset initiated the update
+            if !self.loading {
+                self.preset_edited = true;
+            } else {
+                self.loading = false;
+            }
+
             let update_everything = remotecontrol::update_everything(&mut self.color_grade, self.object_path.clone(), self.ip_address.clone());
             
             match update_everything {
@@ -471,6 +483,8 @@ impl eframe::App for ColorGradeApp {
                     println!("Error: {}", e);
                 }
             }
+
+            self.pending_update = false;
         }
     }
 }

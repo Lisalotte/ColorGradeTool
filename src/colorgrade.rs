@@ -6,10 +6,10 @@ pub struct ColorValues {
     pub g: f64,
     pub b: f64,
     pub a: f64,
-    pub r_old: Option<f64>,
-    pub g_old: Option<f64>,
-    pub b_old: Option<f64>,
-    pub a_old: Option<f64>,
+    pub r_old: f64,
+    pub g_old: f64,
+    pub b_old: f64,
+    pub a_old: f64,
 }
 
 impl ColorValues {

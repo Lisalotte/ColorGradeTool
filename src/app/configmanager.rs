@@ -134,7 +134,8 @@ pub fn configure_buttons(ui: &mut egui::Ui, _ctx: &Context, clicked: &mut bool, 
                 let text = format!("{} - {}", project_name, get_presetname(&actualpath));
 
                 ui.horizontal(|ui| {
-                    ui.label(text)
+                    ui.set_max_width(300.0);
+                    ui.add(egui::Label::new(text).truncate(true));
                 });
 
                 if ui.button( "Overwrite").clicked() {
