@@ -125,47 +125,48 @@ pub fn configure_buttons(ui: &mut egui::Ui, _ctx: &Context, clicked: &mut bool, 
 
                 let actualpath = path.unwrap().path();
 
-                get_projectname(&actualpath, &mut project_name);
-            
-                // let text = RichText::new(
-                //     format!("{} - {}", project_name, get_presetname(&actualpath)))
-                //     .color(Color32::BLACK)
-                //     .background_color(Color32::LIGHT_GRAY);
-                let text = format!("{} - {}", project_name, get_presetname(&actualpath));
+                let filename = actualpath.file_stem().unwrap().to_str().unwrap();
 
-                ui.horizontal(|ui| {
-                    ui.set_max_width(300.0);
-                    ui.add(egui::Label::new(text).truncate(true));
-                });
+                // Filename should follow the pattern: button<#>.json
+                if filename.starts_with("button") && filename.len() <= 7 {
+                    get_projectname(&actualpath, &mut project_name);
+                
+                    let text = format!("{} - {}", project_name, get_presetname(&actualpath));
 
-                if ui.button( "Overwrite").clicked() {
-                    *button_clicked = counter;
-                    *clicked = true;
-                    *show_config_viewport = true;
-                }
+                    ui.horizontal(|ui| {
+                        ui.set_max_width(300.0);
+                        ui.add(egui::Label::new(text).truncate(true));
+                    });
 
-                if ui.button("Load").clicked() {
-                    // Show warning
-                    // if yes, load config
-                    *button_clicked = counter;
-                    *clicked = true;
-                    *show_popup = true;
-                                        
-                }
+                    if ui.button( "Overwrite").clicked() {
+                        *button_clicked = counter;
+                        *clicked = true;
+                        *show_config_viewport = true;
+                    }
 
-                ui.label(" ");
+                    if ui.button("Load").clicked() {
+                        // Show warning
+                        // if yes, load config
+                        *button_clicked = counter;
+                        *clicked = true;
+                        *show_popup = true;
+                                            
+                    }
 
-                if col == col_max {
-                    ui.end_row();
-                    col = 1;
-                } else {
-                    col += 1;
-                }
+                    ui.label(" ");
 
-                if counter > 9 {
-                    break;
-                } else {
-                    counter += 1;
+                    if col == col_max {
+                        ui.end_row();
+                        col = 1;
+                    } else {
+                        col += 1;
+                    }
+
+                    if counter >= 9 {
+                        break;
+                    } else {
+                        counter += 1;
+                    }
                 }
             }
 
@@ -173,7 +174,7 @@ pub fn configure_buttons(ui: &mut egui::Ui, _ctx: &Context, clicked: &mut bool, 
             let col_max = 2;
             let mut col = 1;
 
-            if counter <= 9 {
+            if counter < 9 {
                 for _i in counter..10 {                
                     ui.horizontal(|ui| {
                         ui.label("Unassigned")

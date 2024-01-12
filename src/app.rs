@@ -14,6 +14,8 @@ use rfd;
 
 use self::remotecontrol::{check_connection, check_object_path};
 
+// Struct ButtonConfig
+// Used to copy current config details to the "Overwrite config button" window
 pub struct ButtonConfig {
     project_name: String,
     preset_name: String,
@@ -120,7 +122,7 @@ impl ColorGradeApp {
 
         let mut object_path_init = String::from("");
         let mut ip_address_init = String::from("");
-        let mut project_name_init = String::from("");
+        let mut project_name_init = String::from("Default");
         let mut preset_name_init = String::from("preset");
 
         // Read default config file
@@ -148,7 +150,7 @@ impl ColorGradeApp {
                 },        
             };
         }
-
+        
         // Instantiate the color_grade struct
         Self {
             color_grade: color_grade_obj,
@@ -228,6 +230,8 @@ impl eframe::App for ColorGradeApp {
             }
         }
 
+        //---- Configuration Mode ----
+
         if !self.simple_mode {
             //--- Top panel ---
             egui::TopBottomPanel::top("top_panel")
@@ -276,7 +280,7 @@ impl eframe::App for ColorGradeApp {
                                         self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
                                     }
                                 }
-                            }
+                            } // TODO: Add a way to enter a custom name
                         }
                         ui.label(format!("UE Project: {}", self.project_name));
                     });
@@ -340,7 +344,6 @@ impl eframe::App for ColorGradeApp {
                                     },        
                                 };
                             }
-                            //
                         }
                     });  
                 });
@@ -407,7 +410,10 @@ impl eframe::App for ColorGradeApp {
                 ui.allocate_space(ui.available_size()); // Fill in extra space with emptiness
             });
         }
-        else { // Simple mode
+
+        //---- Simple mode ----
+        
+        else {
             egui::CentralPanel::default()
             .frame(style::panel_frame(ctx))
             .show(ctx, |ui| {

@@ -1,3 +1,4 @@
+use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -12,6 +13,10 @@ pub fn buttons(app: &mut ColorGradeApp, ui: &mut egui::Ui, _ctx: &Context, click
     if let Ok(current_dir) = std::env::current_dir() {
         let config_folder = "config/buttons";
 
+        if !PathBuf::from_str(config_folder).unwrap().exists() {
+            create_dir_all(config_folder).unwrap();
+        }
+
         let paths = std::fs::read_dir(config_folder).unwrap();
  
         let mut counter = 0;
@@ -24,57 +29,61 @@ pub fn buttons(app: &mut ColorGradeApp, ui: &mut egui::Ui, _ctx: &Context, click
             for path in paths {
 
                 let buttonconfigdir = path.unwrap().path();
+                let filename = buttonconfigdir.file_stem().unwrap().to_str().unwrap();
 
-                // Project name                
-                let mut project_name = String::from("");
-                configmanager::get_projectname(&buttonconfigdir, &mut project_name);
+                // Filename should follow the pattern: button<#>.json
+                if filename.starts_with("button") && filename.len() <= 7 {
 
-                // Preset name
-                let preset_name = configmanager::get_presetname(&buttonconfigdir);
-            
-                let mut text = format!("{} - {}", project_name, preset_name);
+                    // Project name                
+                    let mut project_name = String::from("");
+                    configmanager::get_projectname(&buttonconfigdir, &mut project_name);
 
-                // Presets dir
-                let mut presetdir = current_dir.join("presets");
-
-                if !presetdir.is_dir() {
-                    println!("The presets folder cannot be found"); // TODO: display error message in place of button
-                    break;
-                }
-
-                // Path to preset
-                let presetpath = format!("{}/{}.json", presetdir.as_mut_os_string().to_str().unwrap(), preset_name);
-
+                    // Preset name
+                    let preset_name = configmanager::get_presetname(&buttonconfigdir);
                 
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    ui.horizontal(|ui| {
-                        ui.set_max_width(400.0);
-                        let pathbuf = PathBuf::from_str(presetpath.as_str()).unwrap();
-                        if !pathbuf.exists() {
-                            text = String::from("Preset couldn't be found");
-                        }
-                        let button = egui::Button::new(text).wrap(true);
-                        if ui.add(button).clicked() {
-                            presetmanager::load_preset(&mut app.color_grade, presetpath.clone());
-                            app.loading = true;
-                            *clicked = true;
-                        }
+                    let mut text = format!("{} - {}", project_name, preset_name);
+
+                    // Presets dir
+                    let mut presetdir = current_dir.join("presets");
+
+                    if !presetdir.is_dir() {
+                        // TODO: display error message in place of button
+                        break;
+                    }
+
+                    // Path to preset
+                    let presetpath = format!("{}/{}.json", presetdir.as_mut_os_string().to_str().unwrap(), preset_name);
+           
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_max_width(400.0);
+                            let pathbuf = PathBuf::from_str(presetpath.as_str()).unwrap();
+                            if !pathbuf.exists() {
+                                text = String::from("Preset couldn't be found");
+                            }
+                            let button = egui::Button::new(text).wrap(true);
+                            if ui.add(button).clicked() {
+                                presetmanager::load_preset(&mut app.color_grade, presetpath.clone());
+                                app.loading = true;
+                                *clicked = true;
+                            }
+                        });
                     });
-                });
 
-                ui.label(" ");
+                    ui.label(" ");
 
-                if col == col_max {
-                    ui.end_row();
-                    col = 1;
-                } else {
-                    col += 1;
-                }
+                    if col == col_max {
+                        ui.end_row();
+                        col = 1;
+                    } else {
+                        col += 1;
+                    }
 
-                if counter > 9 {
-                    break;
-                } else {
-                    counter += 1;
+                    if counter > 9 {
+                        break;
+                    } else {
+                        counter += 1;
+                    }
                 }
             }
         });
