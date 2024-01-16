@@ -192,7 +192,6 @@ pub fn configure_buttons(ui: &mut egui::Ui, _ctx: &Context, clicked: &mut bool, 
 
                     ui.label(" ");
 
-                    //TODO: Should add ui.end_row() here!
                     if col == col_max {
                         ui.end_row();
                         col = 1;

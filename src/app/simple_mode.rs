@@ -11,10 +11,20 @@ pub fn buttons(app: &mut ColorGradeApp, ui: &mut egui::Ui, _ctx: &Context, click
 
     // For all files in the config folder
     if let Ok(current_dir) = std::env::current_dir() {
+
+        // Config dir
         let config_folder = "config/buttons";
 
         if !PathBuf::from_str(config_folder).unwrap().exists() {
             create_dir_all(config_folder).unwrap();
+        }
+
+        // Presets dir
+        let mut presetdir = current_dir.join("presets");
+
+        if !presetdir.is_dir() {
+            ui.label("Preset directory could not be found.");
+            return;
         }
 
         let paths = std::fs::read_dir(config_folder).unwrap();
@@ -42,14 +52,6 @@ pub fn buttons(app: &mut ColorGradeApp, ui: &mut egui::Ui, _ctx: &Context, click
                     let preset_name = configmanager::get_presetname(&buttonconfigdir);
                 
                     let mut text = format!("{} - {}", project_name, preset_name);
-
-                    // Presets dir
-                    let mut presetdir = current_dir.join("presets");
-
-                    if !presetdir.is_dir() {
-                        // TODO: display error message in place of button
-                        break;
-                    }
 
                     // Path to preset
                     let presetpath = format!("{}/{}.json", presetdir.as_mut_os_string().to_str().unwrap(), preset_name);
@@ -88,6 +90,4 @@ pub fn buttons(app: &mut ColorGradeApp, ui: &mut egui::Ui, _ctx: &Context, click
             }
         });
     }
-
-    // Load the preset connected to the first button (which is always default.json - for now)
 }
