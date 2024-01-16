@@ -282,7 +282,7 @@ impl eframe::App for ColorGradeApp {
                                 if let Some(path) = rfd::FileDialog::new()
                                 .set_directory(current_dir)
                                 .pick_file() {
-                                    if path.extension() == Some(OsStr::new("uproject")) {
+                                    if path.extension() == Some(OsStr::new("uproject")) || path.extension() == Some(OsStr::new("umap")) {
                                         self.project_name = String::from(path.file_stem().unwrap().to_str().unwrap());
                                     }
                                 }
