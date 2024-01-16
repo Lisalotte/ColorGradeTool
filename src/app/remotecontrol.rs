@@ -94,6 +94,7 @@ pub fn update_everything(color_grade: &mut colorgrade::ColorGrade, path: String,
         items[format!("con_{}", prefix)] = component.contrast.to_json();
         items[format!("gam_{}", prefix)] = component.gamma.to_json();
         items[format!("gain_{}", prefix)] = component.gain.to_json();
+        items[format!("offset_{}", prefix)] = component.offset.to_json();
     }
 
     let request = json!({

@@ -64,7 +64,7 @@ pub struct ColorGradeApp {
 impl ColorGradeApp {
 
     // Initialize with default values
-    fn new_colorgrade() -> (colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues) {
+    fn new_colorgrade() -> (colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues, colorgrade::ColorValues) {
         let sat = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
@@ -77,41 +77,47 @@ impl ColorGradeApp {
         let gain = colorgrade::ColorValues{
             r: 1.0, g: 1.0, b: 1.0, a: 1.0, r_old: 1.0, g_old: 1.0, b_old: 1.0, a_old: 1.0
         };
+        let off = colorgrade::ColorValues{
+            r: 0.0, g: 0.0, b: 0.0, a: 0.0, r_old: 0.0, g_old: 0.0, b_old: 0.0, a_old: 0.0
+        };
 
-        return (sat, con, gam, gain);
+        return (sat, con, gam, gain, off);
     }
 
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 
-        let (sat, con, gam, gain) = Self::new_colorgrade();
+        let (sat, con, gam, gain, off) = Self::new_colorgrade();
 
         let fullscreen = colorgrade::ColorComponent::new(
             "fullscreen",
             sat,
             con,
             gam,
-            gain
+            gain,
+            off
         );
 
-        let (sat, con, gam, gain) = Self::new_colorgrade();
+        let (sat, con, gam, gain, off) = Self::new_colorgrade();
 
         let scene = colorgrade::ColorComponent::new(
             "scene",
             sat,
             con,
             gam,
-            gain
+            gain,
+            off
         );
 
-        let (sat, con, gam, gain) = Self::new_colorgrade();
+        let (sat, con, gam, gain, off) = Self::new_colorgrade();
 
         let camera = colorgrade::ColorComponent::new(
             "camera",
             sat,
             con,
             gam,
-            gain
+            gain,
+            off
         );
 
         let components: [colorgrade::ColorComponent; 3] = [fullscreen, scene, camera];
@@ -204,7 +210,7 @@ impl eframe::App for ColorGradeApp {
         // If so, update all values to UE
         for component  in self.color_grade.components.iter_mut() {
 
-            let iter_array = [&mut component.saturation, &mut component.contrast, &mut component.gamma, &mut component.gain];
+            let iter_array = [&mut component.saturation, &mut component.contrast, &mut component.gamma, &mut component.gain, &mut component.offset];
 
             for color_value in iter_array {
                 if color_value.r != color_value.r_old {

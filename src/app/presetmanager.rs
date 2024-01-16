@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::ptr::null;
 use std::str::FromStr;
 
 use serde_json::json;
@@ -18,7 +19,11 @@ fn to_json(color_values: &colorgrade::ColorValues) -> Value {
 }
 
 fn from_json(color_values: &mut colorgrade::ColorValues, json_object: &Value) {
-    
+
+    if json_object.is_null() || json_object["X"].is_null() || json_object["Y"].is_null() || json_object["Z"].is_null() || json_object["W"].is_null() {
+        return;
+    }
+
     let r = &json_object["X"];
     color_values.r = serde_json::from_value(r.clone()).unwrap();
     
@@ -49,14 +54,14 @@ pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
         let con_json = to_json(&component.contrast);
         let gam_json = to_json(&component.gamma);
         let gai_json = to_json(&component.gain);
-
-        println!("values: {}", sat_json);
+        let off_json = to_json(&component.offset);
 
         let component_json = json!({
             "saturation" : sat_json,
             "contrast" : con_json,
             "gamma" : gam_json,
-            "gain" : gai_json
+            "gain" : gai_json,
+            "offset" : off_json
         });
 
         if component.name == "fullscreen" {
@@ -106,18 +111,21 @@ pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
                 from_json(&mut component.contrast, &json_object["fullscreen"]["contrast"]);
                 from_json(&mut component.gamma, &json_object["fullscreen"]["gamma"]);
                 from_json(&mut component.gain, &json_object["fullscreen"]["gain"]);
+                from_json(&mut component.offset, &json_object["fullscreen"]["offset"]);
             }
             else if component.name == "scene" {
                 from_json(&mut component.saturation, &json_object["scene"]["saturation"]);
                 from_json(&mut component.contrast, &json_object["scene"]["contrast"]);
                 from_json(&mut component.gamma, &json_object["scene"]["gamma"]);
-                from_json(&mut component.gain, &json_object["scene"]["gain"]);            
+                from_json(&mut component.gain, &json_object["scene"]["gain"]); 
+                from_json(&mut component.offset, &json_object["scene"]["offset"]);           
             }
             else if component.name == "camera" {
                 from_json(&mut component.saturation, &json_object["camera"]["saturation"]);
                 from_json(&mut component.contrast, &json_object["camera"]["contrast"]);
                 from_json(&mut component.gamma, &json_object["camera"]["gamma"]);
-                from_json(&mut component.gain, &json_object["camera"]["gain"]);            
+                from_json(&mut component.gain, &json_object["camera"]["gain"]);    
+                from_json(&mut component.offset, &json_object["camera"]["offset"]);        
             } else {
                 println!("Error loading JSON. No matching name found.");
             }

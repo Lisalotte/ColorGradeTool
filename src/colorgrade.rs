@@ -13,15 +13,11 @@ pub struct ColorValues {
 }
 
 impl ColorValues {
-    pub fn create_sliders(&mut self, ui: &mut egui::Ui, name: &str) {
+    pub fn create_sliders(&mut self, ui: &mut egui::Ui, name: &str, step: f64, minval: f64, maxval: f64) {
 
         ui.vertical(|ui| {            
             ui.label(name);
             //self.add_sliderbox(ui);
-            
-            let step = 0.05;
-            let minval = 0.0 + step;
-            let maxval = 2.0 - step;
 
             ui.horizontal(|ui| {
                 ui.label("R");
@@ -30,7 +26,7 @@ impl ColorValues {
                         self.r -= step;
                     }
                 }
-                ui.add(egui::Slider::new(&mut self.r, 0.0..=2.0));
+                ui.add(egui::Slider::new(&mut self.r, minval..=maxval));
                 if ui.button("+").clicked() {
                     if self.r <= maxval {
                         self.r += step;
@@ -46,7 +42,7 @@ impl ColorValues {
                         self.g -= step;
                     }
                 }            
-                ui.add(egui::Slider::new(&mut self.g, 0.0..=2.0));
+                ui.add(egui::Slider::new(&mut self.g, minval..=maxval));
                 if ui.button("+").clicked() {
                     if self.g <= maxval {
                         self.g += step;
@@ -62,7 +58,7 @@ impl ColorValues {
                         self.b -= step;
                     }
                 }
-                ui.add(egui::Slider::new(&mut self.b, 0.0..=2.0));
+                ui.add(egui::Slider::new(&mut self.b, minval..=maxval));
                 if ui.button("+").clicked() {
                     if self.b <= maxval {
                         self.b += step;
@@ -78,7 +74,7 @@ impl ColorValues {
                         self.a -= step;
                     }
                 }
-                ui.add(egui::Slider::new(&mut self.a, 0.0..=2.0));
+                ui.add(egui::Slider::new(&mut self.a, minval..=maxval));
                 if ui.button("+").clicked() {
                     if self.a <= maxval {
                         self.a += step;
@@ -106,16 +102,18 @@ pub struct ColorComponent {
     pub contrast: ColorValues,
     pub gamma: ColorValues,
     pub gain: ColorValues,
+    pub offset: ColorValues,
 }
 
 impl ColorComponent {
-    pub fn new(name_in: &str, sat: ColorValues, con: ColorValues, gam: ColorValues, gai: ColorValues) -> Self {
+    pub fn new(name_in: &str, sat: ColorValues, con: ColorValues, gam: ColorValues, gai: ColorValues, off: ColorValues) -> Self {
         Self {
             name: String::from(name_in),
             saturation: sat,
             contrast: con,
             gamma: gam,
-            gain: gai
+            gain: gai,
+            offset: off,
         }
     }
 }
@@ -145,12 +143,17 @@ impl ColorGrade {
     pub fn create_sliderbox(&mut self, ui: &mut egui::Ui) {
         for comp in self.components.iter_mut() {
             
+            let step = 0.05;
+            let minval = 0.0 + step;
+            let maxval = 2.0 - step;
+
             ui.heading(Self::capitalize(&comp.name));
             ui.horizontal(|ui| {
-                comp.saturation.create_sliders(ui, "Saturation");
-                comp.contrast.create_sliders(ui, "Contrast");
-                comp.gamma.create_sliders(ui, "Gamma");
-                comp.gain.create_sliders(ui, "Gain");
+                comp.saturation.create_sliders(ui, "Saturation", step, minval, maxval);
+                comp.contrast.create_sliders(ui, "Contrast", step, minval, maxval);
+                comp.gamma.create_sliders(ui, "Gamma", step, minval, maxval);
+                comp.gain.create_sliders(ui, "Gain", step, minval, maxval);
+                comp.offset.create_sliders(ui, "Offset", 0.01, -1.0, 1.0);
             });
             
         }
