@@ -1,3 +1,4 @@
+use std::ops::Add;
 use std::path::PathBuf;
 use std::ptr::null;
 use std::str::FromStr;
@@ -134,4 +135,32 @@ pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
         println!("Couldn't find preset file."); // TODO show error message
     }
 
+}
+
+pub fn get_saved_presetnames() -> Vec<String> {
+    let mut presetnames = Vec::new();
+
+    if let Ok(current_dir) = std::env::current_dir() {
+
+        let presets_folder = "presets";
+        let presets_folder_path = current_dir.join(presets_folder);
+
+        if !presets_folder_path.is_dir() {
+            println!("Presets folder not found.");
+            return presetnames;
+        }
+
+        let paths = std::fs::read_dir(presets_folder_path).unwrap();
+
+        for path in paths {
+
+            let pathbuf = PathBuf::from_str(path.unwrap().file_name().to_str().unwrap()).unwrap();
+            let preset_name = String::from(pathbuf.file_stem().unwrap().to_str().unwrap());
+
+            presetnames.push(preset_name);
+        }
+        return presetnames;
+    }
+    println!("Presets not found.");
+    return presetnames;
 }

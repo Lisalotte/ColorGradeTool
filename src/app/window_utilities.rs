@@ -1,4 +1,8 @@
+use std::thread::current;
+
 use egui::Context;
+use egui::InnerResponse;
+use egui::Ui;
 use crate::app::configmanager;
 use crate::app::presetmanager;
 use crate::app::remotecontrol;
@@ -126,6 +130,27 @@ pub fn show_ip_viewport(app: &mut ColorGradeApp, ctx: &Context) {
     );
 }
 
+fn dropdownmenu(ui: &mut Ui, presetname: &mut String) {
+
+    // Find current presets in presets folder
+    let current_presets = presetmanager::get_saved_presetnames();
+
+    // If user selects an option, change current preset name to that option
+    let mut selected = presetname.clone();
+
+    egui::ComboBox::from_label("")
+        .selected_text(format!("{:?}", presetname))
+        .show_ui(ui, |ui| {
+            // For each preset, create an option in the dropdown list
+            for preset in current_presets {
+                ui.selectable_value(&mut selected, preset.clone(), preset);
+            }
+        }
+    );
+
+    *presetname = selected;
+}
+
 pub fn show_config_button_viewport(app: &mut ColorGradeApp, ctx: &Context) {
      
     ctx.show_viewport_immediate(
@@ -146,7 +171,11 @@ pub fn show_config_button_viewport(app: &mut ColorGradeApp, ctx: &Context) {
                 });
                 ui.horizontal(|ui| {
                     ui.label("Preset:");
-                    ui.text_edit_singleline(&mut app.button_config.preset_name);
+                    //ui.text_edit_singleline(&mut app.button_config.preset_name);
+
+                    // dropdown menu
+                    dropdownmenu(ui, &mut app.button_config.preset_name);
+
                 });
                 ui.horizontal(|ui| {
                     ui.label("BP Object Path:");
