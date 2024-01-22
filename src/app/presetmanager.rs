@@ -1,0 +1,166 @@
+use std::ops::Add;
+use std::path::PathBuf;
+use std::ptr::null;
+use std::str::FromStr;
+
+use serde_json::json;
+use serde_json::Value;
+
+use crate::colorgrade;
+
+fn to_json(color_values: &colorgrade::ColorValues) -> Value {
+    let json_obj = json!({
+        "X": color_values.r,
+        "Y": color_values.g,
+        "Z": color_values.b,
+        "W": color_values.a,
+    });
+
+    return json_obj;
+}
+
+fn from_json(color_values: &mut colorgrade::ColorValues, json_object: &Value) {
+
+    if json_object.is_null() || json_object["X"].is_null() || json_object["Y"].is_null() || json_object["Z"].is_null() || json_object["W"].is_null() {
+        return;
+    }
+
+    let r = &json_object["X"];
+    color_values.r = serde_json::from_value(r.clone()).unwrap();
+    
+    let g = &json_object["Y"];
+    color_values.g = serde_json::from_value(g.clone()).unwrap();
+
+    let b = &json_object["Z"];
+    color_values.b = serde_json::from_value(b.clone()).unwrap();
+
+    let a = &json_object["W"];
+    color_values.a = serde_json::from_value(a.clone()).unwrap();
+
+}
+
+pub fn save_preset(color_grade: &colorgrade::ColorGrade, name: &String) {
+    // Create a json object
+    
+    let mut json_object = json!({
+        "fullscreen" : {},
+        "scene" : {},
+        "camera" : {}
+    });
+
+    // Write function input to json object
+    for component in color_grade.components.iter() {
+
+        let sat_json = to_json(&component.saturation);
+        let con_json = to_json(&component.contrast);
+        let gam_json = to_json(&component.gamma);
+        let gai_json = to_json(&component.gain);
+        let off_json = to_json(&component.offset);
+
+        let component_json = json!({
+            "saturation" : sat_json,
+            "contrast" : con_json,
+            "gamma" : gam_json,
+            "gain" : gai_json,
+            "offset" : off_json
+        });
+
+        if component.name == "fullscreen" {
+            json_object["fullscreen"] = component_json;
+        }
+        else if component.name == "scene" {
+            json_object["scene"] = component_json;
+        }
+        else if component.name == "camera" {
+            json_object["camera"] = component_json;
+        } else {
+            println!("Error saving JSON. No matching name found.");
+        }
+    }
+    // Serialize the JSON object to a JSON string
+    let json_string = serde_json::to_string_pretty(&json_object).expect("Failed to serialize to JSON");
+
+    if let Ok(current_dir) = std::env::current_dir() {
+        let presets_folder = "presets";
+
+        // Construct the path to the folder in the current working directory
+        let presets_folder_path = current_dir.join(presets_folder);
+
+        let folder_path_string = presets_folder_path.to_string_lossy().to_string();
+
+        if !presets_folder_path.is_dir() {
+            // Create the folder if it doesn't exist
+            std::fs::create_dir_all(presets_folder_path).unwrap();
+        }
+        // Write the JSON string to a file
+        std::fs::write(format!("{folder_path_string}/{name}.json"), json_string).expect("Failed to write to file");
+    }
+}
+
+pub fn load_preset(color_grade: &mut colorgrade::ColorGrade, path: String) {
+    
+    let pathbuf = PathBuf::from_str(path.as_str()).unwrap();
+
+    if pathbuf.exists() {
+        let json_string = std::fs::read_to_string(path).expect("Failed to read file");
+
+        let json_object: Value = serde_json::from_str(&json_string).expect("Failed to deserialize JSON"); 
+    
+        for component in color_grade.components.iter_mut() {
+            if component.name == "fullscreen" {
+                from_json(&mut component.saturation, &json_object["fullscreen"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["fullscreen"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["fullscreen"]["gamma"]);
+                from_json(&mut component.gain, &json_object["fullscreen"]["gain"]);
+                from_json(&mut component.offset, &json_object["fullscreen"]["offset"]);
+            }
+            else if component.name == "scene" {
+                from_json(&mut component.saturation, &json_object["scene"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["scene"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["scene"]["gamma"]);
+                from_json(&mut component.gain, &json_object["scene"]["gain"]); 
+                from_json(&mut component.offset, &json_object["scene"]["offset"]);           
+            }
+            else if component.name == "camera" {
+                from_json(&mut component.saturation, &json_object["camera"]["saturation"]);
+                from_json(&mut component.contrast, &json_object["camera"]["contrast"]);
+                from_json(&mut component.gamma, &json_object["camera"]["gamma"]);
+                from_json(&mut component.gain, &json_object["camera"]["gain"]);    
+                from_json(&mut component.offset, &json_object["camera"]["offset"]);        
+            } else {
+                println!("Error loading JSON. No matching name found.");
+            }
+        }
+    } else {
+        println!("Couldn't find preset file."); // TODO show error message
+    }
+
+}
+
+pub fn get_saved_presetnames() -> Vec<String> {
+    let mut presetnames = Vec::new();
+
+    if let Ok(current_dir) = std::env::current_dir() {
+
+        let presets_folder = "presets";
+        let presets_folder_path = current_dir.join(presets_folder);
+
+        if !presets_folder_path.is_dir() {
+            println!("Presets folder not found.");
+            return presetnames;
+        }
+
+        let paths = std::fs::read_dir(presets_folder_path).unwrap();
+
+        for path in paths {
+
+            let pathbuf = PathBuf::from_str(path.unwrap().file_name().to_str().unwrap()).unwrap();
+            let preset_name = String::from(pathbuf.file_stem().unwrap().to_str().unwrap());
+
+            presetnames.push(preset_name);
+        }
+        return presetnames;
+    }
+    println!("Presets not found.");
+    return presetnames;
+}
