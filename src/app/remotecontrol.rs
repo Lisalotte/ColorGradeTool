@@ -1,4 +1,5 @@
 use reqwest;
+use reqwest::Error;
 use serde_json::json;
 use serde_json::Value;
 
@@ -49,9 +50,12 @@ pub fn check_connection(_path: String, ip: String) -> Result<(), reqwest::Error>
 pub fn check_object_path(path: String, ip: String) -> Result<(), reqwest::Error> {
     let url = ip.to_owned() + "remote/object/call";
 
+    println!("Path: {}", path);
+    println!("URL: {}", url.clone());
+
     let request = json!({
         "objectPath": path,
-        "functionName": "UpdateEverything",
+        "functionName": "ReadScene",
         "parameters": "",
     });
 
@@ -61,14 +65,17 @@ pub fn check_object_path(path: String, ip: String) -> Result<(), reqwest::Error>
         .send()?;
 
     match response.error_for_status() {
-        Ok(_res) => return Ok(()),
+        Ok(res) => {
+            println!("Response: {}", res.text().unwrap());
+            return Ok(());
+        }
         Err(err) => {
             // asserting a 400 as an example
             // it could be any status between 400...599
-            assert_eq!(
-                err.status(),
-                Some(reqwest::StatusCode::BAD_REQUEST)
-            );
+            // assert_eq!(
+            //     err.status(),
+            //     Some(reqwest::StatusCode::BAD_REQUEST)
+            // );
             return std::result::Result::Err(err);
         }
     }

@@ -345,7 +345,8 @@ impl eframe::App for ColorGradeApp {
                                         self.path_ok = true;
                                         self.pending_update = true;
                                     },
-                                    Err(_e) => { 
+                                    Err(e) => {
+                                        println!("Error: {}", e);
                                         self.path_ok = false;
                                     },        
                                 };
@@ -492,7 +493,7 @@ impl eframe::App for ColorGradeApp {
                 },
                 Err(e) => {
                     self.connection_ok = false;
-                    println!("Error: {}", e);
+                    println!("Error: Update Everything: {}", e);
                 }
             }
 
