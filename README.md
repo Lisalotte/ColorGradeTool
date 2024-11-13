@@ -15,3 +15,5 @@ The object path points to a Blueprint object, which should be placed in your mai
 3.	Download the UE blueprints (ColorGrading.uasset and MI_ColorGrading.uasset)
     Place the ColorGrading asset in your main level.
     Use the MI_ColorGrading as your compositor color grading material.
+
+<img src="ColorGradeTool.png" alt="Screenshot of the interface" width="600"/>
